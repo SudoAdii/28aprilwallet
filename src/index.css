@@ -19,7 +19,7 @@ body::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('./images/bg.webp') no-repeat center top;
+  background: url('./img/bg.webp') no-repeat center top;
   background-size: 98%;
   filter: blur(0px);
   animation: blurIn 1s ease forwards, floatBG 10s ease-in-out infinite;
