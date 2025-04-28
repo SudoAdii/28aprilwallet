@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Voltrix</title>
+  <title>Voltrix | Coin Creation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous"/>
+  <script src="https://unpkg.com/@solana/web3.js@v1.33.0/lib/index.iife.js"></script>
   <style>
-   
+  
   </style>
 </head>
 <body>
@@ -22,43 +22,53 @@
         <img src="./images/voltrix.png" alt="Voltrix Logo" style="height: 1.5rem;" />
       </span>
     </div>
-    <div class="social-icons">
-      <i class="fab fa-twitter"></i>
-      <i class="fab fa-telegram-plane"></i>
-      <i class="fab fa-youtube"></i>
-      <i class="fab fa-discord"></i>
-    </div>
-    <button class="wallet-button">
-      <svg fill="#ffffff" height="30px" width="30px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 458.531 458.531" xml:space="preserve" stroke="#ffffff">
-        <g id="SVGRepo_iconCarrier">
-          <path d="M336.688,343.962L336.688,343.962c-21.972-0.001-39.848-17.876-39.848-39.848v-66.176 c0-21.972,17.876-39.847,39.848-39.847h103.83c0.629,0,1.254,0.019,1.876,0.047v-65.922c0-16.969-13.756-30.725-30.725-30.725 H30.726C13.756,101.49,0,115.246,0,132.215v277.621c0,16.969,13.756,30.726,30.726,30.726h380.943 c16.969,0,30.725-13.756,30.725-30.726v-65.922c-0.622,0.029-1.247,0.048-1.876,0.048H336.688z"></path>
-          <path d="M440.518,219.925h-103.83c-9.948,0-18.013,8.065-18.013,18.013v66.176c0,9.948,8.065,18.013,18.013,18.013h103.83 c9.948,0,18.013-8.064,18.013-18.013v-66.176C458.531,227.989,450.466,219.925,440.518,219.925z M372.466,297.024 c-14.359,0-25.999-11.64-25.999-25.999s11.64-25.999,25.999-25.999c14.359,0,25.999,11.64,25.999,25.999 C398.465,285.384,386.825,297.024,372.466,297.024z"></path>
-        </g>
-      </svg>
-      &nbsp;&nbsp;Register&nbsp;
-    </button>
-  </header>
+  </header><br>
 
-  <section class="main-section">
-    <h1>Welcome to <span class="highlight">Voltrix, </span><br />your all-in-one bot to Rug Pull on Solana!</h1>
+  <a href="javascript:history.back()" class="back-button">
+    <i class="fas fa-arrow-left"></i> Back
+  </a>
+
+  <section class="coin-maker-container neon-box">
+    <h1 style="text-align: center;">
+      <span class="highlight">🚀</span> Create a Coin to <span class="highlight">Rug</span>
+    </h1><br>
+    <form class="coin-form" id="coinForm">
+      <input type="text" placeholder="Name (e.g. Voltrix)" required />
+      <input type="text" placeholder="Ticker (e.g. VTRX)" required />
+      <input type="number" placeholder="Token Supply (e.g. 1000000000)" required />
+      <input type="text" placeholder="Description (optional)" />
+      <input type="url" placeholder="Image URL (optional)" />
+    <button id="connectWallet" class="creat-button" style="letter-spacing: 2px;">
+  <b>Create Coin</b>
+</button>
+
+    </form>
+
   </section>
 
-  <!-- Registration Box -->
-  <div class="register-box">
-    <h2><span class="highlight">Register</span></h2>
-    <form id="registerForm">
-      <input type="text" placeholder="Username" required />
-      <input type="password" placeholder="Username" required />
-      <button type="submit">Create Account</button>
-    </form>
-    <div class="forgot-password">Forgot Password?</div>
-  </div>
+  <div class="wallet-popup" id="walletPopup">
+  <div class="wallet-modal">
+    <div class="wallet-close" id="closePopup"><i class="fas fa-times"></i></div>
+    <i class="fas fa-wallet"></i>
+    <h2><span class="highlight">Connect Wallet</span></h2>
+    <p>To deploy your coin, please connect your wallet securely using Voltrix.</p>
+ <button id="connect_button" onclick="connectWallet()" style="padding: 10px 20px; font-size: 1rem;">Connect Wallet</button>
+  <p id="status_p" style="margin-top: 20px;"></p>
 
-  <script>
-    document.getElementById('registerForm').addEventListener('submit', function(event) {
-      event.preventDefault(); // Prevent the default form submission
-      window.location.href = 'main.html'; // Redirect to main.html
-    });
-  </script>
+  </div>
+</div>
+<script>
+  document.getElementById('connectWallet').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('walletPopup').classList.add('show-popup');
+  });
+
+  document.getElementById('closePopup').addEventListener('click', function () {
+    document.getElementById('walletPopup').classList.remove('show-popup');
+  });
+
+
+</script>
+
 </body>
 </html>
