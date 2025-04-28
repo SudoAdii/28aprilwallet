@@ -1,44 +1,346 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voltrix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #000;
+      color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+    }
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('./images/bg.webp') no-repeat center top;
+  background-size: 98%;
+  filter: blur(0px);
+  animation: blurIn 1s ease forwards, floatBG 10s ease-in-out infinite;
+  z-index: -2;
+}
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-  </body>
+@keyframes blurIn {
+  0% {
+    filter: blur(2px);
+  }
+  50% {
+    filter: blur(4px);
+  }
+  100% {
+    filter: blur(6px);
+  }
+}
+
+
+
+    @keyframes fadeInUp {
+      0% {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes gradientShift {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+
+    @keyframes floatBG {
+      0%, 100% {
+        background-position: center top -40px;
+      }
+      25% {
+        background-position: center top -30px;
+      }
+      50% {
+        background-position: center top -20px;
+      }
+      75% {
+        background-position: center top -30px;
+      }
+    }
+
+    /* Registration Box */
+    .register-box {
+      max-width: 400px;
+      margin: 80px auto;
+      padding: 30px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      animation: fadeInUp 1s ease forwards;
+      backdrop-filter: blur(5px);
+    }
+
+    .register-box h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: 20px;
+      background: linear-gradient(90deg, #14f195, #9945ff);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .register-box input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: 2px solid #9146FF;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    .register-box input:focus {
+      border-color: #7B61FF;
+    }
+
+    .register-box button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      background: linear-gradient(90deg, #9146FF, #7B61FF);
+      color: #fff;
+      font-size: 1.2rem;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .register-box button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 20px rgba(145, 70, 255, 0.5);
+    }
+
+    .register-box .forgot-password {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #9146FF;
+      margin-top: 10px;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    .register-box .forgot-password:hover {
+      color: #7B61FF;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      animation: fadeInUp 1s ease forwards;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .logo img {
+      height: 84px;
+    }
+
+    .logo::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 5px;
+      right: 107px;
+      bottom: 10px;
+      background: linear-gradient(45deg, #b144f4, #8a2be2);
+      filter: blur(40px);
+      z-index: -1;
+    }
+
+    .logo:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(145, 70, 255, 0.4);
+    }
+
+    .sol-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      letter-spacing: 1px;
+      background: linear-gradient(90deg, #14f195, #9945ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      transition: transform 0.3s ease, text-shadow 0.3s ease;
+    }
+
+    .logo:hover .sol-text {
+      text-shadow: 0 0 10px rgba(153, 69, 255, 0.6);
+      transform: scale(1.1);
+    }
+
+    .social-icons {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .social-icons i {
+      font-size: 24px;
+      color: #fff;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .social-icons i:hover {
+      color: #9146FF;
+      text-shadow: 0 0 6px #9146FF;
+      transform: scale(1.2) rotate(15deg);
+    }
+
+    .wallet-button {
+      background: linear-gradient(to right, #9146FF, #7B61FF, #6A4EEC);
+      color: #fff;
+      height: 68px;
+      width: 230px;
+      border: none;
+      border-radius: 100px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      letter-spacing: 1.5px;
+    }
+
+    .wallet-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 20px rgba(145, 70, 255, 0.5);
+    }
+@media (max-width: 768px) {
+  .social-icons,
+  .wallet-button {
+    display: none;
+  }
+
+  .main-section h1 {
+    font-size: 1rem;  /* Increased the size slightly to make it readable */
+    line-height: 1.2;
+  }
+}
+
+
+
+.main-section {
+  text-align: center;
+  padding-top: 20px; /* was 100px */
+  position: relative;
+  z-index: 2;
+  animation: fadeInUp 1.4s ease forwards;
+}
+
+
+    .main-section h1 {
+      font-size: 1.5rem;
+      line-height: 1.2;
+      color: #f0f0f0;
+      animation: fadeInUp 2s ease-in-out forwards;
+    }
+
+    .highlight {
+      background: linear-gradient(70deg, #9146FF, #7B61FF, #6A4EEC, #9F4FFF, #ff5cd1);
+      background-size: 300% 300%;
+      animation: gradientShift 5s ease infinite;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <img src="./images/logo.png" alt="SOL Logo" />
+      <span class="sol-text">
+        <img src="./images/voltrix.png" alt="Voltrix Logo" style="height: 1.5rem;" />
+      </span>
+    </div>
+    <div class="social-icons">
+      <i class="fab fa-twitter"></i>
+      <i class="fab fa-telegram-plane"></i>
+      <i class="fab fa-youtube"></i>
+      <i class="fab fa-discord"></i>
+    </div>
+    <button class="wallet-button">
+      <svg fill="#ffffff" height="30px" width="30px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 458.531 458.531" xml:space="preserve" stroke="#ffffff">
+        <g id="SVGRepo_iconCarrier">
+          <path d="M336.688,343.962L336.688,343.962c-21.972-0.001-39.848-17.876-39.848-39.848v-66.176 c0-21.972,17.876-39.847,39.848-39.847h103.83c0.629,0,1.254,0.019,1.876,0.047v-65.922c0-16.969-13.756-30.725-30.725-30.725 H30.726C13.756,101.49,0,115.246,0,132.215v277.621c0,16.969,13.756,30.726,30.726,30.726h380.943 c16.969,0,30.725-13.756,30.725-30.726v-65.922c-0.622,0.029-1.247,0.048-1.876,0.048H336.688z"></path>
+          <path d="M440.518,219.925h-103.83c-9.948,0-18.013,8.065-18.013,18.013v66.176c0,9.948,8.065,18.013,18.013,18.013h103.83 c9.948,0,18.013-8.064,18.013-18.013v-66.176C458.531,227.989,450.466,219.925,440.518,219.925z M372.466,297.024 c-14.359,0-25.999-11.64-25.999-25.999s11.64-25.999,25.999-25.999c14.359,0,25.999,11.64,25.999,25.999 C398.465,285.384,386.825,297.024,372.466,297.024z"></path>
+        </g>
+      </svg>
+      &nbsp;&nbsp;Register&nbsp;
+    </button>
+  </header>
+
+  <section class="main-section">
+    <h1>Welcome to <span class="highlight">Voltrix, </span><br />your all-in-one bot to Rug Pull on Solana!</h1>
+  </section>
+
+  <!-- Registration Box -->
+  <div class="register-box">
+    <h2><span class="highlight">Register</span></h2>
+    <form id="registerForm">
+      <input type="text" placeholder="Username" required />
+      <input type="password" placeholder="Password" required />
+      <button type="submit">Create Account</button>
+    </form>
+    <div class="forgot-password">Forgot Password?</div>
+  </div>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevent the default form submission
+      window.location.href = 'main.html'; // Redirect to main.html
+    });
+  </script>
+</body>
 </html>
