@@ -1,8 +1,7 @@
+import React, { FC, ReactNode, useMemo, useEffect } from 'react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider, useWalletModal } from '@solana/wallet-adapter-react-ui';
-
-import '../src/css/bootstrap.css';
 import {
     GlowWalletAdapter,
     LedgerWalletAdapter,
@@ -13,12 +12,12 @@ import {
     SolletWalletAdapter,
     TorusWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
-
 import { clusterApiUrl } from '@solana/web3.js';
-import React, { FC, ReactNode, useMemo, useEffect } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
 
-require('./App.css');
-require('@solana/wallet-adapter-react-ui/styles.css');
+import '../src/css/bootstrap.css';
+import './App.css';
+import '@solana/wallet-adapter-react-ui/styles.css';
 
 const App: FC = () => {
     return (
@@ -31,7 +30,7 @@ const App: FC = () => {
 export default App;
 
 const Context: FC<{ children: ReactNode }> = ({ children }) => {
-    const network = WalletAdapterNetwork.Mainnet;
+    const network = WalletAdapterNetwork.Mainnet; // or 'devnet' if you prefer
     const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
     const wallets = useMemo(
@@ -59,24 +58,25 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
 const Content: FC = () => {
     const { setVisible } = useWalletModal();
+    const { wallets } = useWallet(); // Ensure wallets are loaded
 
     useEffect(() => {
         const connectButton = document.getElementById('connect_button');
 
-        if (connectButton) {
-            connectButton.addEventListener('click', openWalletModal);
-        }
-
-        function openWalletModal() {
-            setVisible(true);
-        }
-
-        return () => {
-            if (connectButton) {
-                connectButton.removeEventListener('click', openWalletModal);
+        const openWalletModal = () => {
+            if (wallets.length > 0) {
+                setVisible(true);
+            } else {
+                console.error("Wallet adapters not ready yet.");
             }
         };
-    }, [setVisible]);
+
+        connectButton?.addEventListener('click', openWalletModal);
+
+        return () => {
+            connectButton?.removeEventListener('click', openWalletModal);
+        };
+    }, [setVisible, wallets]);
 
     return null;
 };
