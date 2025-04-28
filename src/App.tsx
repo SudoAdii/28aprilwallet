@@ -1,6 +1,6 @@
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
+import { WalletModalProvider, useWalletModal } from '@solana/wallet-adapter-react-ui';
 
 import '../src/css/bootstrap.css';
 import {
@@ -40,7 +40,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
             new PhantomWalletAdapter(),
             new GlowWalletAdapter(),
             new SlopeWalletAdapter(),
-            new SolletExtensionWalletAdapter(), 
+            new SolletExtensionWalletAdapter(),
             new SolletWalletAdapter(),
             new SolflareWalletAdapter({ network }),
             new TorusWalletAdapter(),
@@ -56,8 +56,6 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
         </ConnectionProvider>
     );
 };
-
-import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 
 const Content: FC = () => {
     const { setVisible } = useWalletModal();
@@ -80,5 +78,5 @@ const Content: FC = () => {
         };
     }, [setVisible]);
 
-    return null; // nothing visible inside React (only the WalletModal will show when button clicked)
+    return null;
 };
