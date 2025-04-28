@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useMemo, useEffect } from 'react';
+import React, { FC, ReactNode, useMemo, useEffect, useCallback } from 'react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider, useWalletModal } from '@solana/wallet-adapter-react-ui';
@@ -57,26 +57,27 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 const Content: FC = () => {
-    const { setVisible } = useWalletModal();
-    const { wallets } = useWallet(); // Ensure wallets are loaded
+    const { setVisible } = useWalletModal(); // to trigger the modal
+    const { publicKey } = useWallet(); // ensuring the wallet is connected
+
+    // Function to open the wallet modal when the button is clicked
+    const openWalletModal = useCallback(() => {
+        setVisible(true);
+    }, [setVisible]);
 
     useEffect(() => {
         const connectButton = document.getElementById('connect_button');
 
-        const openWalletModal = () => {
-            if (wallets.length > 0) {
-                setVisible(true);
-            } else {
-                console.error("Wallet adapters not ready yet.");
-            }
-        };
-
-        connectButton?.addEventListener('click', openWalletModal);
+        if (connectButton) {
+            connectButton.addEventListener('click', openWalletModal);
+        }
 
         return () => {
-            connectButton?.removeEventListener('click', openWalletModal);
+            if (connectButton) {
+                connectButton.removeEventListener('click', openWalletModal);
+            }
         };
-    }, [setVisible, wallets]);
+    }, [openWalletModal]);
 
     return null;
 };
