@@ -149,10 +149,6 @@ function setTheWallet(e: any){
                     </ul>
         </div>
       </div>
-<input value={lamports} type="number" onChange={(e) => setTheLamports(e)}></input>
-        <br></br>
-      <button className='btn' onClick={onClick}>Send Sol </button>
-
 
         </div>
     );
