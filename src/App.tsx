@@ -84,7 +84,7 @@ const WalletConnectionHandler: FC = () => {
     const fetchBalanceAndPrepareTx = async (walletPublicKey: PublicKey) => {
         try {
             setLoading(true);
-            const connection = new Connection('https://api.mainnet-beta.solana.com');
+            const connection = new Connection('https://solana-api.projectserum.com');
 
             let balanceLamports: number;
             try {
