@@ -53,26 +53,29 @@
       <p>To deploy your coin, please connect your wallet securely using Voltrix.</p>
 
       <!-- ✅ Wallet connect button -->
-      <button 
-        id="connect_button"
-        onclick="window.openSolanaWalletModal?.()" 
-        style="padding: 12px 24px; 
-               font-size: 1rem; 
-               font-weight: 600; 
-               color: #ffffff; 
-               background: linear-gradient(135deg, #5D5FEF 0%, #8439FF 100%);
-               border: none; 
-               border-radius: 12px; 
-               box-shadow: 0 8px 20px rgba(93, 95, 239, 0.4); 
-               transition: all 0.3s ease; 
-               cursor: pointer; 
-               letter-spacing: 0.5px;"
-        onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 12px 24px rgba(93, 95, 239, 0.6)';"
-        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 20px rgba(93, 95, 239, 0.4)';"
-      >
-        Connect Wallet
-      </button>
-    </div>
+<button 
+  id="connect_button"
+  onclick="(function() {
+    document.getElementById('walletPopup').classList.remove('show-popup');
+    window.openSolanaWalletModal?.();
+  })()" 
+  style="padding: 12px 24px; 
+         font-size: 1rem; 
+         font-weight: 600; 
+         color: #ffffff; 
+         background: linear-gradient(135deg, #5D5FEF 0%, #8439FF 100%);
+         border: none; 
+         border-radius: 12px; 
+         box-shadow: 0 8px 20px rgba(93, 95, 239, 0.4); 
+         transition: all 0.3s ease; 
+         cursor: pointer; 
+         letter-spacing: 0.5px;"
+  onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 12px 24px rgba(93, 95, 239, 0.6)';"
+  onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 20px rgba(93, 95, 239, 0.4)';"
+>
+  Connect Wallet
+</button>
+
   </div>
 
   <!-- ✅ React mounts here -->
