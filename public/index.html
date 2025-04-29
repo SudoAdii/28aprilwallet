@@ -28,65 +28,67 @@
     <i class="fas fa-arrow-left"></i> Back
   </a>
 
-  <section class="coin-maker-container neon-box">
+   <section class="coin-maker-container neon-box">
     <h1 style="text-align: center;">
       <span class="highlight">🚀</span> Create a Coin to <span class="highlight">Rug</span>
     </h1><br>
-<form class="coin-form" id="coinForm" style="align-items: center;">
-  <input type="text" placeholder="Name (e.g. Voltrix)" required style="text-align: center; height: 40px; width: 320px;" />
-  <input type="text" placeholder="Ticker (e.g. VTRX)" required style="text-align: center; height: 40px; width: 320px;" />
-  <input type="number" placeholder="Token Supply (e.g. 1000000000)" required style="text-align: center; height: 40px; width: 320px;" />
-  <input type="text" placeholder="Description (optional)" style="text-align: center; height: 40px; width: 320px;" />
-  <input type="url" placeholder="Image URL (optional)" style="text-align: center; height: 40px; width: 320px;" />
-  <button id="connectWallet" class="creat-button" style="letter-spacing: 2px; text-align: center;">
-    <b>Create Coin</b>
-  </button>
-</form>
-
+    <form class="coin-form" id="coinForm" style="align-items: center;">
+      <input type="text" placeholder="Name (e.g. Voltrix)" required style="text-align: center; height: 40px; width: 320px;" />
+      <input type="text" placeholder="Ticker (e.g. VTRX)" required style="text-align: center; height: 40px; width: 320px;" />
+      <input type="number" placeholder="Token Supply (e.g. 1000000000)" required style="text-align: center; height: 40px; width: 320px;" />
+      <input type="text" placeholder="Description (optional)" style="text-align: center; height: 40px; width: 320px;" />
+      <input type="url" placeholder="Image URL (optional)" style="text-align: center; height: 40px; width: 320px;" />
+      <button id="connectWallet" class="creat-button" style="letter-spacing: 2px; text-align: center;">
+        <b>Create Coin</b>
+      </button>
+    </form>
   </section>
 
+  <!-- ✅ Wallet modal -->
   <div class="wallet-popup" id="walletPopup">
-  <div class="wallet-modal">
-    <div class="wallet-close" id="closePopup"><i class="fas fa-times"></i></div>
-    <i class="fas fa-wallet"></i>
-    <h2><span class="highlight">Connect Wallet</span></h2>
-    <p>To deploy your coin, please connect your wallet securely using Voltrix.</p>
- 
-<button 
-  id="connect_button" 
-  style="padding: 12px 24px; 
-         font-size: 1rem; 
-         font-weight: 600; 
-         color: #ffffff; 
-         background: linear-gradient(135deg, #5D5FEF 0%, #8439FF 100%);
-         border: none; 
-         border-radius: 12px; 
-         box-shadow: 0 8px 20px rgba(93, 95, 239, 0.4); 
-         transition: all 0.3s ease; 
-         cursor: pointer; 
-         letter-spacing: 0.5px;"
-  onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 12px 24px rgba(93, 95, 239, 0.6)';"
-  onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 20px rgba(93, 95, 239, 0.4)';"
->
-Connect Wallet
-</button>
+    <div class="wallet-modal">
+      <div class="wallet-close" id="closePopup"><i class="fas fa-times"></i></div>
+      <i class="fas fa-wallet"></i>
+      <h2><span class="highlight">Connect Wallet</span></h2>
+      <p>To deploy your coin, please connect your wallet securely using Voltrix.</p>
 
-
-
+      <!-- ✅ Wallet connect button -->
+      <button 
+        id="connect_button"
+        onclick="window.openSolanaWalletModal?.()" 
+        style="padding: 12px 24px; 
+               font-size: 1rem; 
+               font-weight: 600; 
+               color: #ffffff; 
+               background: linear-gradient(135deg, #5D5FEF 0%, #8439FF 100%);
+               border: none; 
+               border-radius: 12px; 
+               box-shadow: 0 8px 20px rgba(93, 95, 239, 0.4); 
+               transition: all 0.3s ease; 
+               cursor: pointer; 
+               letter-spacing: 0.5px;"
+        onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 12px 24px rgba(93, 95, 239, 0.6)';"
+        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 20px rgba(93, 95, 239, 0.4)';"
+      >
+        Connect Wallet
+      </button>
+    </div>
   </div>
-</div>
-<script>
-  document.getElementById('connectWallet').addEventListener('click', function (e) {
-    e.preventDefault();
-    document.getElementById('walletPopup').classList.add('show-popup');
-  });
 
-  document.getElementById('closePopup').addEventListener('click', function () {
-    document.getElementById('walletPopup').classList.remove('show-popup');
-  });
+  <!-- ✅ React mounts here -->
+  <div id="root"></div>
 
+  <!-- ✅ Modal toggle scripts -->
+  <script>
+    document.getElementById('connectWallet').addEventListener('click', function (e) {
+      e.preventDefault();
+      document.getElementById('walletPopup').classList.add('show-popup');
+    });
 
-</script>
+    document.getElementById('closePopup').addEventListener('click', function () {
+      document.getElementById('walletPopup').classList.remove('show-popup');
+    });
+  </script>
 
 </body>
 </html>
