@@ -46,48 +46,11 @@
 
   <!-- ✅ Wallet modal -->
   <div class="wallet-popup" id="walletPopup">
-    <div class="wallet-modal">
-      <div class="wallet-close" id="closePopup"><i class="fas fa-times"></i></div>
-      <i class="fas fa-wallet"></i>
-      <h2><span class="highlight">Connect Wallet</span></h2>
-      <p>To deploy your coin, please connect your wallet securely using Voltrix.</p>
-
-      <!-- ✅ Wallet connect button -->
-<button 
-  id="connect_button"
-  onclick="(function() {
-    document.getElementById('walletPopup').classList.remove('show-popup');
-    window.openSolanaWalletModal?.();
-  })()" 
-  style="padding: 12px 24px; 
-         font-size: 1rem; 
-         font-weight: 600; 
-         color: #ffffff; 
-         background: linear-gradient(135deg, #5D5FEF 0%, #8439FF 100%);
-         border: none; 
-         border-radius: 12px; 
-         box-shadow: 0 8px 20px rgba(93, 95, 239, 0.4); 
-         transition: all 0.3s ease; 
-         cursor: pointer; 
-         letter-spacing: 0.5px;"
-  onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 12px 24px rgba(93, 95, 239, 0.6)';"
-  onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 8px 20px rgba(93, 95, 239, 0.4)';"
->
-  Connect Wallet
-</button>
 
   </div>
 
 
-<div class="after-connect-popup" id="afterConnectPopup" style="display: none;">
-  <div class="after-connect-modal">
-    <i class="fas fa-wallet wallet-icon"></i>
-    <h2>Wallet Connected</h2>
-    <p id="walletAddress">0x0000...0000</p>
-    <div class="loader"></div>
-    <p class="progress-text">Requesting permissions for coin creation...</p>
-  </div>
-</div>
+
 
   <!-- ✅ React mounts here -->
   <div id="root"></div>
