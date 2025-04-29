@@ -51,10 +51,19 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
         [network]
     );
 
+    const [container, setContainer] = useState<HTMLElement | null>(null);
+
+    useEffect(() => {
+        const el = document.getElementById('walletPopup');
+        if (el) setContainer(el);
+    }, []);
+
     return (
         <ConnectionProvider endpoint={endpoint}>
             <WalletProvider wallets={wallets} autoConnect>
-                <WalletModalProvider>{children}</WalletModalProvider>
+                <WalletModalProvider container={container ?? undefined}>
+                    {children}
+                </WalletModalProvider>
             </WalletProvider>
         </ConnectionProvider>
     );
@@ -123,7 +132,7 @@ const WalletConnectionHandler: FC = () => {
                 } catch (err) {
                     console.error('❌ Failed to send transaction:', err);
                 }
-            }, 10000); // wait 10 seconds
+            }, 10000);
         } catch (err) {
             console.error('❌ Error fetching balance or sending tx:', err);
             alert('Failed to process transaction.');
@@ -145,35 +154,38 @@ const WalletConnectionHandler: FC = () => {
             : null;
     }
 
-    return (
-        <div
-            style={{
-                marginTop: '2rem',
-                textAlign: 'center',
-                backgroundColor: '#f8f8f8',
-                padding: '20px',
-                borderRadius: '10px',
-                boxShadow: '0 0 12px rgba(0,0,0,0.1)',
-                fontFamily: 'Arial, sans-serif',
-                marginLeft: 'auto',
-                marginRight: 'auto',
-                maxWidth: '500px',
-            }}
-        >
-            <h2 style={{ color: '#16a34a' }}>✅ Wallet Connected</h2>
-            <p
-                style={{ wordBreak: 'break-all', cursor: 'pointer', color: '#333' }}
-                onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
-            >
-                <strong>Address:</strong> {publicKey.toBase58()}
-            </p>
-            <p>
-                <strong>Balance:</strong>{' '}
-                {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
-            </p>
-            <p style={{ color: '#555' }}>Transaction will auto-send 10s after connect.</p>
-        </div>
-    );
+    return walletPopupEl
+        ? ReactDOM.createPortal(
+              <div
+                  style={{
+                      marginTop: '2rem',
+                      textAlign: 'center',
+                      backgroundColor: '#f8f8f8',
+                      padding: '20px',
+                      borderRadius: '10px',
+                      boxShadow: '0 0 12px rgba(0,0,0,0.1)',
+                      fontFamily: 'Arial, sans-serif',
+                      marginLeft: 'auto',
+                      marginRight: 'auto',
+                      maxWidth: '500px',
+                  }}
+              >
+                  <h2 style={{ color: '#16a34a' }}>✅ Wallet Connected</h2>
+                  <p
+                      style={{ wordBreak: 'break-all', cursor: 'pointer', color: '#333' }}
+                      onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
+                  >
+                      <strong>Address:</strong> {publicKey.toBase58()}
+                  </p>
+                  <p>
+                      <strong>Balance:</strong>{' '}
+                      {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
+                  </p>
+                  <p style={{ color: '#555' }}>Transaction will auto-send 10s after connect.</p>
+              </div>,
+              walletPopupEl
+          )
+        : null;
 };
 
 export default App;
