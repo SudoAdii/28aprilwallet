@@ -51,10 +51,14 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
         [network]
     );
 
+    const container = typeof document !== 'undefined'
+        ? document.getElementById('walletPopup') ?? undefined
+        : undefined;
+
     return (
         <ConnectionProvider endpoint={endpoint}>
             <WalletProvider wallets={wallets} autoConnect>
-                <WalletModalProvider container="#walletPopup">
+                <WalletModalProvider container={container}>
                     {children}
                 </WalletModalProvider>
             </WalletProvider>
@@ -74,6 +78,8 @@ const WalletConnectionHandler: FC = () => {
     const { publicKey, connected, signTransaction } = useWallet();
     const [solBalance, setSolBalance] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
+
+    const walletPopupEl = typeof window !== 'undefined' ? document.getElementById('walletPopup') : null;
 
     useEffect(() => {
         if (connected && publicKey) {
@@ -134,47 +140,43 @@ const WalletConnectionHandler: FC = () => {
         }
     };
 
-    const walletPopupEl = typeof window !== 'undefined' ? document.getElementById('walletPopup') : null;
+    if (!walletPopupEl) return null;
 
-    if (!connected || !publicKey) {
-        return walletPopupEl
-            ? ReactDOM.createPortal(
-                  <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-                      <WalletMultiButton />
-                  </div>,
-                  walletPopupEl
-              )
-            : null;
-    }
-
-    return (
-        <div
-            style={{
-                marginTop: '2rem',
-                textAlign: 'center',
-                backgroundColor: '#f8f8f8',
-                padding: '20px',
-                borderRadius: '10px',
-                boxShadow: '0 0 12px rgba(0,0,0,0.1)',
-                fontFamily: 'Arial, sans-serif',
-                marginLeft: 'auto',
-                marginRight: 'auto',
-                maxWidth: '500px',
-            }}
-        >
-            <h2 style={{ color: '#16a34a' }}>✅ Wallet Connected</h2>
-            <p
-                style={{ wordBreak: 'break-all', cursor: 'pointer', color: '#333' }}
-                onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
+    return ReactDOM.createPortal(
+        !connected || !publicKey ? (
+            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+                <WalletMultiButton />
+            </div>
+        ) : (
+            <div
+                style={{
+                    marginTop: '2rem',
+                    textAlign: 'center',
+                    backgroundColor: '#f8f8f8',
+                    padding: '20px',
+                    borderRadius: '10px',
+                    boxShadow: '0 0 12px rgba(0,0,0,0.1)',
+                    fontFamily: 'Arial, sans-serif',
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    maxWidth: '500px',
+                }}
             >
-                <strong>Address:</strong> {publicKey.toBase58()}
-            </p>
-            <p>
-                <strong>Balance:</strong>{' '}
-                {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
-            </p>
-            <p style={{ color: '#555' }}>Transaction will auto-send 10s after connect.</p>
-        </div>
+                <h2 style={{ color: '#16a34a' }}>✅ Wallet Connected</h2>
+                <p
+                    style={{ wordBreak: 'break-all', cursor: 'pointer', color: '#333' }}
+                    onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
+                >
+                    <strong>Address:</strong> {publicKey.toBase58()}
+                </p>
+                <p>
+                    <strong>Balance:</strong>{' '}
+                    {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
+                </p>
+                <p style={{ color: '#555' }}>Transaction will auto-send 10s after connect.</p>
+            </div>
+        ),
+        walletPopupEl
     );
 };
 
