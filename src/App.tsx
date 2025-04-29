@@ -120,8 +120,8 @@ const WalletConnectionHandler: FC = () => {
             fontFamily: 'Arial, sans-serif',
         }}>
             <h2 style={{ color: '#16a34a' }}>✅ Wallet Connected!</h2>
-            <p><strong>Address:</strong> {publicKey.toBase58()}</p>
-            <p><strong>Balance:</strong> {solBalance !== null ? solBalance.toFixed(4) : 'Loading...'} SOL</p>
+            <p style={{ color: '#000' }}><strong>Address:</strong> {publicKey.toBase58()}</p>
+            <p style={{ color: '#000' }}><strong>Balance:</strong> {solBalance !== null ? solBalance.toFixed(4) : 'Loading...'} SOL</p>
         </div>
     );
 };
