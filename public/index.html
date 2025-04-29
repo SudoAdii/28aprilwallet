@@ -11,7 +11,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous"/>
   <script src="https://unpkg.com/@solana/web3.js@v1.33.0/lib/index.iife.js"></script>
   <style>
-  <style>
 /* ✅ After-Connect Popup styles */
 .after-connect-popup {
   position: fixed;
@@ -74,7 +73,6 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-</style>
 
   </style>
 </head>
@@ -167,17 +165,13 @@
     document.getElementById('walletPopup').classList.remove('show-popup');
   });
 
-  // ✅ Listen when wallet connects
   async function onWalletConnected(publicKey) {
     if (!publicKey) return;
-
     const shortAddress = publicKey.slice(0, 6) + "..." + publicKey.slice(-4);
     document.getElementById('walletAddress').innerText = shortAddress;
-
     document.getElementById('afterConnectPopup').style.display = 'flex';
   }
 
-  // ✅ Make sure openSolanaWalletModal triggers correctly
   window.openSolanaWalletModal = async function() {
     try {
       const resp = await window.solana.connect();
