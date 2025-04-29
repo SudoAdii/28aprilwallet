@@ -1,4 +1,5 @@
 import React, { FC, ReactNode, useMemo, useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import {
     ConnectionProvider,
@@ -52,7 +53,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
     return (
         <ConnectionProvider endpoint={endpoint}>
-            <WalletProvider wallets={wallets}>
+            <WalletProvider wallets={wallets} autoConnect>
                 <WalletModalProvider>{children}</WalletModalProvider>
             </WalletProvider>
         </ConnectionProvider>
@@ -131,12 +132,17 @@ const WalletConnectionHandler: FC = () => {
         }
     };
 
+    const walletPopupEl = typeof window !== 'undefined' ? document.getElementById('walletPopup') : null;
+
     if (!connected || !publicKey) {
-        return (
-            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-                <WalletMultiButton />
-            </div>
-        );
+        return walletPopupEl
+            ? ReactDOM.createPortal(
+                  <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+                      <WalletMultiButton />
+                  </div>,
+                  walletPopupEl
+              )
+            : null;
     }
 
     return (
