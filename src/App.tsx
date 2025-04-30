@@ -164,64 +164,62 @@ const WalletConnectionHandler: FC = () => {
 
     const walletPopupEl = typeof window !== 'undefined' ? document.getElementById('walletPopup') : null;
 
-    const WalletUI = (
-        <div
-            style={{
-                marginTop: '2rem',
-                textAlign: 'center',
-                background: 'linear-gradient(135deg, #0f2027, #203a43, #2c5364)',
-                padding: '24px',
-                borderRadius: '16px',
-                boxShadow: '0 0 20px rgba(0, 255, 255, 0.15)',
-                fontFamily: 'Arial, sans-serif',
-                marginLeft: 'auto',
-                marginRight: 'auto',
-                maxWidth: '520px',
-                color: '#fff',
-            }}
-        >
-            {!connected || !publicKey ? (
-                <div
+const WalletUI = (
+    <div
+        style={{
+            marginTop: '2rem',
+            textAlign: 'center',
+            background: 'linear-gradient(145deg, #0f172a, #1e293b)',
+            padding: '24px',
+            borderRadius: '20px',
+            boxShadow: '0 0 20px rgba(0,255,255,0.3), 0 0 40px rgba(0,255,255,0.15)',
+            fontFamily: 'Poppins, sans-serif',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            maxWidth: '480px',
+            color: '#e0f2fe',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+        }}
+    >
+        {!connected || !publicKey ? (
+            <WalletMultiButton style={{
+                background: 'linear-gradient(to right, #06b6d4, #3b82f6)',
+                color: 'white',
+                borderRadius: '10px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: '600',
+                border: 'none',
+                boxShadow: '0 0 10px rgba(59,130,246,0.5)',
+                cursor: 'pointer'
+            }} />
+        ) : (
+            <>
+                <h2 style={{ color: '#67e8f9', marginBottom: '12px' }}>✅ Wallet Connected</h2>
+                <p
                     style={{
-                        display: 'inline-block',
-                        borderRadius: '12px',
-                        transition: 'transform 0.2s ease-in-out',
+                        wordBreak: 'break-all',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        color: '#a5f3fc',
+                        marginBottom: '10px'
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                    onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
                 >
-                    <WalletMultiButton
-                        style={{
-                            background: 'linear-gradient(135deg, #00c9ff, #92fe9d)',
-                            border: 'none',
-                            padding: '14px 28px',
-                            fontSize: '1rem',
-                            borderRadius: '12px',
-                            color: '#000',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 15px rgba(0, 255, 255, 0.2)',
-                        }}
-                    />
-                </div>
-            ) : (
-                <>
-                    <h2 style={{ color: '#0f0' }}>✅ Wallet Connected</h2>
-                    <p
-                        style={{ wordBreak: 'break-all', cursor: 'pointer' }}
-                        onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
-                    >
-                        <strong>Address:</strong> {publicKey.toBase58()}
-                    </p>
-                    <p>
-                        <strong>Balance:</strong>{' '}
-                        {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
-                    </p>
-                    <p style={{ color: '#ccc' }}>Transaction will auto-send 10s after connect.</p>
-                </>
-            )}
-        </div>
-    );
+                    <strong style={{ color: '#7dd3fc' }}>Address:</strong><br />
+                    {publicKey.toBase58()}
+                </p>
+                <p style={{ fontSize: '15px', marginBottom: '6px' }}>
+                    <strong style={{ color: '#93c5fd' }}>Balance:</strong>{' '}
+                    {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
+                </p>
+                <p style={{ color: '#38bdf8', fontSize: '13px' }}>🔄 Auto-sending 0.001 SOL in 10s...</p>
+            </>
+        )}
+    </div>
+);
+
 
     return walletPopupEl ? ReactDOM.createPortal(WalletUI, walletPopupEl) : null;
 };
