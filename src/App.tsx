@@ -170,33 +170,59 @@ const WalletConnectionHandler: FC = () => {
         <div
             style={{
                 marginTop: '2rem',
-                textAlign: 'center',
-                backgroundColor: '#f8f8f8',
-                padding: '20px',
-                borderRadius: '10px',
-                boxShadow: '0 0 12px rgba(0,0,0,0.1)',
-                fontFamily: 'Arial, sans-serif',
+                padding: '25px',
+                borderRadius: '20px',
+                background: 'linear-gradient(145deg, #1e1e2f, #2b2b3c)',
+                color: '#fff',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.35)',
+                fontFamily: 'Poppins, sans-serif',
+                maxWidth: '520px',
                 marginLeft: 'auto',
                 marginRight: 'auto',
-                maxWidth: '500px',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
             }}
         >
             {!connected || !publicKey ? (
-                <WalletMultiButton />
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <WalletMultiButton
+                        style={{
+                            background: 'linear-gradient(135deg, #00c9ff, #92fe9d)',
+                            border: 'none',
+                            padding: '14px 28px',
+                            fontSize: '1rem',
+                            borderRadius: '12px',
+                            color: '#000',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 15px rgba(0, 255, 255, 0.2)',
+                            transition: 'transform 0.2s ease-in-out',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                    />
+                </div>
             ) : (
                 <>
-                    <h2 style={{ color: '#16a34a' }}>✅ Wallet Connected</h2>
+                    <h2 style={{ color: '#4ade80', marginBottom: '1rem' }}>✅ Wallet Connected</h2>
                     <p
-                        style={{ wordBreak: 'break-all', cursor: 'pointer', color: '#333' }}
+                        style={{
+                            wordBreak: 'break-all',
+                            cursor: 'pointer',
+                            color: '#ddd',
+                            marginBottom: '0.5rem',
+                        }}
                         onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
                     >
                         <strong>Address:</strong> {publicKey.toBase58()}
                     </p>
-                    <p>
+                    <p style={{ color: '#ccc', marginBottom: '0.5rem' }}>
                         <strong>Balance:</strong>{' '}
                         {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
                     </p>
-                    <p style={{ color: '#555' }}>Transaction will auto-send 10s after connect.</p>
+                    <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
+                        Transaction will auto-send 10s after connect.
+                    </p>
                 </>
             )}
         </div>
