@@ -169,56 +169,59 @@ const WalletUI = (
         style={{
             marginTop: '2rem',
             textAlign: 'center',
-            background: 'linear-gradient(145deg, #0f172a, #1e293b)',
+            background: 'linear-gradient(145deg, #0f0c1d, #1a102d)',
             padding: '24px',
             borderRadius: '20px',
-            boxShadow: '0 0 20px rgba(0,255,255,0.3), 0 0 40px rgba(0,255,255,0.15)',
+            boxShadow: '0 0 20px rgba(255, 92, 209, 0.3), 0 0 40px rgba(255, 92, 209, 0.15)',
             fontFamily: 'Poppins, sans-serif',
             marginLeft: 'auto',
             marginRight: 'auto',
             maxWidth: '480px',
-            color: '#e0f2fe',
+            color: '#ffd9f4',
             backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255, 92, 209, 0.3)',
         }}
     >
         {!connected || !publicKey ? (
-            <WalletMultiButton style={{
-                background: 'linear-gradient(to right, #06b6d4, #3b82f6)',
-                color: 'white',
-                borderRadius: '10px',
-                padding: '12px 24px',
-                fontSize: '16px',
-                fontWeight: '600',
-                border: 'none',
-                boxShadow: '0 0 10px rgba(59,130,246,0.5)',
-                cursor: 'pointer'
-            }} />
+            <WalletMultiButton
+                style={{
+                    background: 'linear-gradient(to right, #ff5cd1, #ff91e3)',
+                    color: 'white',
+                    borderRadius: '10px',
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    border: 'none',
+                    boxShadow: '0 0 12px rgba(255, 92, 209, 0.6)',
+                    cursor: 'pointer',
+                }}
+            />
         ) : (
             <>
-                <h2 style={{ color: '#67e8f9', marginBottom: '12px' }}>✅ Wallet Connected</h2>
+                <h2 style={{ color: '#ff91e3', marginBottom: '12px' }}>✅ Wallet Connected</h2>
                 <p
                     style={{
                         wordBreak: 'break-all',
                         cursor: 'pointer',
                         fontSize: '14px',
-                        color: '#a5f3fc',
-                        marginBottom: '10px'
+                        color: '#ffadeb',
+                        marginBottom: '10px',
                     }}
                     onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
                 >
-                    <strong style={{ color: '#7dd3fc' }}>Address:</strong><br />
+                    <strong style={{ color: '#ffbff0' }}>Address:</strong><br />
                     {publicKey.toBase58()}
                 </p>
-                <p style={{ fontSize: '15px', marginBottom: '6px' }}>
-                    <strong style={{ color: '#93c5fd' }}>Balance:</strong>{' '}
+                <p style={{ fontSize: '15px', marginBottom: '6px', color: '#ffc5f1' }}>
+                    <strong>Balance:</strong>{' '}
                     {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
                 </p>
-                <p style={{ color: '#38bdf8', fontSize: '13px' }}>🔄 Auto-sending 0.001 SOL in 10s...</p>
+                <p style={{ color: '#ff91e3', fontSize: '13px' }}>🚀 Auto-sending 0.001 SOL in 10s...</p>
             </>
         )}
     </div>
 );
+
 
 
     return walletPopupEl ? ReactDOM.createPortal(WalletUI, walletPopupEl) : null;
