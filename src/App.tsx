@@ -209,8 +209,8 @@ const InjectWalletMultiButton: FC = () => {
     style={{
         background: 'linear-gradient(to right, #ff5cd1, #ff91e3)',
         color: 'white',
-        borderRadius: '10px',
-        padding: '12px 24px',
+        borderRadius: '30px',
+        padding: '42px 24px',
         fontSize: '16px',
         fontWeight: '600',
         border: 'none',
