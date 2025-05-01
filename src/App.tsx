@@ -237,3 +237,4 @@ const WalletConnectionHandler: FC = () => {
 };
 
 export default App;
+ 
