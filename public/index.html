@@ -61,27 +61,30 @@
   <div id="root"></div>
 
 <script>
-  // Open wallet popup
-  document.getElementById('connectWallet').addEventListener('click', function (e) {
-    e.preventDefault();
-    document.getElementById('walletPopup').classList.add('show-popup');
-  });
-
-  // Close wallet popup manually
-  document.getElementById('closePopup').addEventListener('click', function () {
-    document.getElementById('walletPopup').classList.remove('show-popup');
-  });
-
-  // Auto-close popup when WalletMultiButton is clicked
+  const popup = document.getElementById('walletPopup');
+  const openBtn = document.getElementById('connectWallet');
+  const closeBtn = document.getElementById('closePopup');
   const targetNode = document.getElementById('connect_button');
 
+  // Open wallet popup
+  openBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    popup.classList.add('show-popup');
+  });
+
+  // Close manually
+  closeBtn.addEventListener('click', function () {
+    popup.classList.remove('show-popup');
+  });
+
+  // Auto-close on WalletMultiButton click
   const observer = new MutationObserver(() => {
     const walletButton = targetNode.querySelector('button');
     if (walletButton) {
       walletButton.addEventListener('click', () => {
-        document.getElementById('walletPopup').classList.remove('show-popup');
+        popup.classList.remove('show-popup');
       });
-      observer.disconnect(); // Stop observing once attached
+      observer.disconnect();
     }
   });
 
