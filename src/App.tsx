@@ -168,7 +168,7 @@ const WalletConnectionHandler: FC = () => {
         <div>
             {!connected || !publicKey ? null : (
                 <>
-                    <h2 style={{ color: '#ff91e3', marginBottom: '12px' }}>✅ Wallet Connected</h2>
+                    <span>‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ </span></><h2 style={{ color: '#ff91e3', marginBottom: '12px' }}>✅ Wallet Connected</h2>
                     <p
                         style={{
                             wordBreak: 'break-all',
@@ -227,8 +227,6 @@ const InjectWalletMultiButton: FC = () => {
                   style={{
                       background: 'linear-gradient(to right, #ff5cd1, #ff91e3)',
                       color: 'white',
-                      borderRadius: '30px',
-                      padding: '12px 24px',
                       fontSize: '16px',
                       fontWeight: '600',
                       border: 'none',
