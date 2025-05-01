@@ -47,8 +47,16 @@
   </section>
 
   <div class="wallet-popup" id="walletPopup">
- 
+  <div class="wallet-modal">
+    <div class="wallet-close" id="closePopup"><i class="fas fa-times"></i></div>
+    <i class="fas fa-wallet"></i>
+    <h2><span class="highlight">Connect Wallet</span></h2>
+    <p>To deploy your coin, please connect your wallet securely using Voltrix.</p>
+ <button id="connect_button" onclick="connectWallet()" style="padding: 10px 20px; font-size: 1rem;">Connect Wallet</button>
+  <p id="status_p" style="margin-top: 20px;"></p>
 </div>
+</div>
+  
 <script>
   document.getElementById('connectWallet').addEventListener('click', function (e) {
     e.preventDefault();
