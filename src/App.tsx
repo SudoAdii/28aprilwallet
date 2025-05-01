@@ -165,21 +165,6 @@ const WalletConnectionHandler: FC = () => {
 
     const WalletUI = (
         <div
-            style={{
-                marginTop: '2rem',
-                textAlign: 'center',
-                background: 'linear-gradient(145deg, #0f0c1d, #1a102d)',
-                padding: '24px',
-                borderRadius: '20px',
-                boxShadow: '0 0 20px rgba(255, 92, 209, 0.3), 0 0 40px rgba(255, 92, 209, 0.15)',
-                fontFamily: 'Poppins, sans-serif',
-                marginLeft: 'auto',
-                marginRight: 'auto',
-                maxWidth: '480px',
-                color: '#ffd9f4',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 92, 209, 0.3)',
-            }}
         >
             {!connected || !publicKey ? (
                 <>
