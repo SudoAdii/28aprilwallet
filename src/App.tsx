@@ -164,9 +164,16 @@ const WalletConnectionHandler: FC = () => {
     const walletPopupEl =
         typeof window !== 'undefined' ? document.querySelector('.wallet-popup#walletPopup') : null;
 
-  const WalletUI = (
-  );
-      
+const WalletUI = (
+    <div>
+        {!connected || !publicKey ? null : (
+            <>
+                
+            </>
+        )}
+    </div>
+);
+ 
     return walletPopupEl ? ReactDOM.createPortal(WalletUI, walletPopupEl) : null;
 };
 
