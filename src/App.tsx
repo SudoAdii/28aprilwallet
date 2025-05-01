@@ -164,21 +164,17 @@ const WalletConnectionHandler: FC = () => {
     const walletPopupEl =
         typeof window !== 'undefined' ? document.querySelector('.wallet-popup#walletPopup') : null;
 
-const WalletUI = (
-    <div>
-        {!connected || !publicKey ? null : (
-            <>
-                
-            </>
-        )}
-    </div>
-);
- 
+    const WalletUI = (
+        <div>{!connected || !publicKey ? null : <></>}</div>
+    );
+
     return walletPopupEl ? ReactDOM.createPortal(WalletUI, walletPopupEl) : null;
 };
 
 const InjectWalletMultiButton: FC = () => {
     const target = typeof window !== 'undefined' ? document.getElementById('connect_button') : null;
+    const { connected } = useWallet();
+    const { setVisible } = useWalletModal();
 
     useEffect(() => {
         const closePopupOnClick = () => {
@@ -204,17 +200,34 @@ const InjectWalletMultiButton: FC = () => {
 
     return target
         ? ReactDOM.createPortal(
-              <WalletMultiButton
-                  style={{
-                      background: 'linear-gradient(to right, #ff5cd1, #ff91e3)',
-                      color: 'white',
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      border: 'none',
-                      boxShadow: '0 0 12px rgba(255, 92, 209, 0.6)',
-                      cursor: 'pointer',
-                  }}
-              />,
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                  <WalletMultiButton
+                      style={{
+                          background: 'linear-gradient(to right, #ff5cd1, #ff91e3)',
+                          color: 'white',
+                          fontSize: '16px',
+                          fontWeight: '600',
+                          border: 'none',
+                          boxShadow: '0 0 12px rgba(255, 92, 209, 0.6)',
+                          cursor: 'pointer',
+                      }}
+                  />
+                  {connected && (
+                      <button
+                          onClick={() => setVisible(true)}
+                          style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#6366f1',
+                              textDecoration: 'underline',
+                              fontSize: '14px',
+                              cursor: 'pointer',
+                          }}
+                      >
+                          Change Wallet
+                      </button>
+                  )}
+              </div>,
               target
           )
         : null;
