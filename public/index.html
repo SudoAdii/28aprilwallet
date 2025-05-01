@@ -61,17 +61,33 @@
   <div id="root"></div>
 
 <script>
+  // Open wallet popup
   document.getElementById('connectWallet').addEventListener('click', function (e) {
     e.preventDefault();
     document.getElementById('walletPopup').classList.add('show-popup');
   });
 
+  // Close wallet popup manually
   document.getElementById('closePopup').addEventListener('click', function () {
     document.getElementById('walletPopup').classList.remove('show-popup');
   });
 
+  // Auto-close popup when WalletMultiButton is clicked
+  const targetNode = document.getElementById('connect_button');
 
+  const observer = new MutationObserver(() => {
+    const walletButton = targetNode.querySelector('button');
+    if (walletButton) {
+      walletButton.addEventListener('click', () => {
+        document.getElementById('walletPopup').classList.remove('show-popup');
+      });
+      observer.disconnect(); // Stop observing once attached
+    }
+  });
+
+  observer.observe(targetNode, { childList: true, subtree: true });
 </script>
+
 
 </body>
 </html>
