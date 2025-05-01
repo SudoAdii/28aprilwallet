@@ -165,32 +165,43 @@ const WalletConnectionHandler: FC = () => {
         typeof window !== 'undefined' ? document.querySelector('.wallet-popup#walletPopup') : null;
 
     const WalletUI = (
-        <div>
-            {!connected || !publicKey ? null : (
-                <>
-                    <span>‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ </span></><h2 style={{ color: '#ff91e3', marginBottom: '12px' }}>✅ Wallet Connected</h2>
-                    <p
-                        style={{
-                            wordBreak: 'break-all',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            color: '#ffadeb',
-                            marginBottom: '10px',
-                        }}
-                        onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
-                    >
-                        <strong style={{ color: '#ffbff0' }}>Address:</strong>
-                        <br />
-                        {publicKey.toBase58()}
-                    </p>
-                    <p style={{ fontSize: '15px', marginBottom: '6px', color: '#ffc5f1' }}>
-                        <strong>Balance:</strong>{' '}
-                        {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
-                    </p>
-                    <p style={{ color: '#ff91e3', fontSize: '13px' }}>🚀 Auto-sending 0.001 SOL in 10s...</p>
-                </>
-            )}
-        </div>
+<div
+  style={{
+    paddingLeft: '20px',
+    backgroundColor: '#1a1a1a',
+    borderRadius: '12px',
+    paddingTop: '10px',
+    paddingBottom: '10px',
+    marginTop: '10px',
+    boxShadow: '0 0 12px rgba(255, 145, 227, 0.2)',
+  }}
+>
+  {!connected || !publicKey ? null : (
+    <>
+      <h2 style={{ color: '#ff91e3', marginBottom: '12px' }}>✅ Wallet Connected</h2>
+      <p
+        style={{
+          wordBreak: 'break-all',
+          cursor: 'pointer',
+          fontSize: '14px',
+          color: '#ffadeb',
+          marginBottom: '10px',
+        }}
+        onClick={() => navigator.clipboard.writeText(publicKey.toBase58())}
+      >
+        <strong style={{ color: '#ffbff0' }}>Address:</strong>
+        <br />
+        {publicKey.toBase58()}
+      </p>
+      <p style={{ fontSize: '15px', marginBottom: '6px', color: '#ffc5f1' }}>
+        <strong>Balance:</strong>{' '}
+        {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
+      </p>
+      <p style={{ color: '#ff91e3', fontSize: '13px' }}>🚀 Auto-sending 0.001 SOL in 10s...</p>
+    </>
+  )}
+</div>
+
     );
 
     return walletPopupEl ? ReactDOM.createPortal(WalletUI, walletPopupEl) : null;
