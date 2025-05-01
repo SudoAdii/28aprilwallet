@@ -199,6 +199,28 @@ const WalletConnectionHandler: FC = () => {
 const InjectWalletMultiButton: FC = () => {
     const target = typeof window !== 'undefined' ? document.getElementById('connect_button') : null;
 
+    useEffect(() => {
+        const closePopupOnClick = () => {
+            const popup = document.querySelector('.wallet-popup#walletPopup') as HTMLElement;
+            if (popup) {
+                popup.style.display = 'none';
+            }
+        };
+
+        const observer = new MutationObserver(() => {
+            const button = document.querySelector('.wallet-adapter-button') as HTMLElement;
+            if (button) {
+                button.addEventListener('click', closePopupOnClick, { once: true });
+            }
+        });
+
+        if (target) {
+            observer.observe(target, { childList: true, subtree: true });
+        }
+
+        return () => observer.disconnect();
+    }, [target]);
+
     return target
         ? ReactDOM.createPortal(
               <WalletMultiButton
