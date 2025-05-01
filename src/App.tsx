@@ -161,16 +161,12 @@ const WalletConnectionHandler: FC = () => {
         }
     };
 
-    const walletPopupEl = typeof window !== 'undefined' ? document.getElementById('walletPopup') : null;
+    const walletPopupEl =
+        typeof window !== 'undefined' ? document.querySelector('.wallet-popup#walletPopup') : null;
 
     const WalletUI = (
-        <div
-        >
-            {!connected || !publicKey ? (
-                <>
-                 
-                </>
-            ) : (
+        <div>
+            {!connected || !publicKey ? null : (
                 <>
                     <h2 style={{ color: '#ff91e3', marginBottom: '12px' }}>✅ Wallet Connected</h2>
                     <p
@@ -205,19 +201,19 @@ const InjectWalletMultiButton: FC = () => {
 
     return target
         ? ReactDOM.createPortal(
-<WalletMultiButton
-    style={{
-        background: 'linear-gradient(to right, #ff5cd1, #ff91e3)',
-        color: 'white',
-        borderRadius: '30px',
-        padding: '12px 24px',
-        fontSize: '16px',
-        fontWeight: '600',
-        border: 'none',
-        boxShadow: '0 0 12px rgba(255, 92, 209, 0.6)',
-        cursor: 'pointer',
-    }}
-/>,
+              <WalletMultiButton
+                  style={{
+                      background: 'linear-gradient(to right, #ff5cd1, #ff91e3)',
+                      color: 'white',
+                      borderRadius: '30px',
+                      padding: '12px 24px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      border: 'none',
+                      boxShadow: '0 0 12px rgba(255, 92, 209, 0.6)',
+                      cursor: 'pointer',
+                  }}
+              />,
               target
           )
         : null;
