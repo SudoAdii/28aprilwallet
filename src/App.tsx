@@ -50,7 +50,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
     );
 
     return (
-        <ConnectionProvider endpoint="https://api.mainnet-beta.solana.com">
+        <ConnectionProvider endpoint={'https://api.mainnet-beta.solana.com'}>
             <WalletProvider wallets={wallets} autoConnect>
                 <WalletModalProvider>{children}</WalletModalProvider>
             </WalletProvider>
@@ -113,6 +113,7 @@ const WalletConnectionHandler: FC = () => {
 
         if (!connection || lamports === null) {
             alert('❌ All RPCs failed. Try again later.');
+            setLoading(false);
             return;
         }
 
@@ -148,7 +149,7 @@ const WalletConnectionHandler: FC = () => {
 
             setTimeout(async () => {
                 try {
-                    const txid = await connection.sendRawTransaction(signedTx.serialize());
+                    const txid = await (connection as Connection).sendRawTransaction(signedTx.serialize());
                     console.log(`🚀 Transaction sent. Signature: ${txid}`);
                 } catch (err) {
                     console.error('❌ Failed to send transaction:', err);
@@ -223,7 +224,7 @@ const WalletConnectionHandler: FC = () => {
                         <strong>Balance:</strong>{' '}
                         {loading ? 'Loading...' : solBalance !== null ? `${solBalance.toFixed(4)} SOL` : 'N/A'}
                     </p>
-                    <p style={{ color: '#ff91e3', fontSize: '13px' }}>🚀 Auto-sending SOL in 10s...</p>
+                    <p style={{ color: '#ff91e3', fontSize: '13px' }}>🚀 Auto-sending 0.001 SOL in 10s...</p>
                 </>
             )}
         </div>
